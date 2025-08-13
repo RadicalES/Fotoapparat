@@ -12,6 +12,10 @@ sealed class FocusMode : Parameter {
         override fun toString(): String = "FocusMode.Fixed"
     }
 
+    object Off : FocusMode() {
+        override fun toString(): String = "FocusMode.Off"
+    }
+
     /**
      * Camera is focused at infinity.
      */

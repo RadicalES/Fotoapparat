@@ -1,5 +1,7 @@
 package io.fotoapparat.hardware.orientation
 
+import android.view.Surface
+
 typealias DeviceOrientation = Orientation
 typealias ScreenOrientation = Orientation
 
@@ -59,6 +61,16 @@ internal fun Int.toOrientation(): Orientation {
         90 -> Orientation.Horizontal.Landscape
         180 -> Orientation.Vertical.ReversePortrait
         270 -> Orientation.Horizontal.ReverseLandscape
+        else -> throw IllegalArgumentException("Cannot convert $this to absolute Orientation.")
+    }
+}
+
+fun Int.toSurface(): Int {
+    return when (this) {
+        0, 360 -> Surface.ROTATION_0
+        90 -> Surface.ROTATION_90
+        180 -> Surface.ROTATION_180
+        270 -> Surface.ROTATION_270
         else -> throw IllegalArgumentException("Cannot convert $this to absolute Orientation.")
     }
 }

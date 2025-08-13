@@ -2,7 +2,6 @@
 
 package io.fotoapparat.parameter.camera.convert
 
-import android.hardware.Camera
 import io.fotoapparat.parameter.FpsRange
 
 /**
@@ -10,6 +9,6 @@ import io.fotoapparat.parameter.FpsRange
  */
 internal fun IntArray.toFpsRange(): FpsRange =
         FpsRange(
-                this[Camera.Parameters.PREVIEW_FPS_MIN_INDEX],
-                this[Camera.Parameters.PREVIEW_FPS_MAX_INDEX]
+                this[0],
+                this[1]
         )

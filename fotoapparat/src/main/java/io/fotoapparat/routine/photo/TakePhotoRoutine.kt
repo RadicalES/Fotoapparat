@@ -1,7 +1,7 @@
 package io.fotoapparat.routine.photo
 
 import io.fotoapparat.exception.camera.CameraException
-import io.fotoapparat.hardware.CameraDevice
+import io.fotoapparat.hardware.CameraHardware
 import io.fotoapparat.hardware.Device
 import io.fotoapparat.result.Photo
 import kotlinx.coroutines.runBlocking
@@ -17,7 +17,7 @@ internal fun Device.takePhoto(): Photo = runBlocking {
     }
 }
 
-private fun CameraDevice.startPreviewSafely() {
+private suspend fun CameraHardware.startPreviewSafely() {
     try {
         startPreview()
     } catch (ignore: CameraException) {

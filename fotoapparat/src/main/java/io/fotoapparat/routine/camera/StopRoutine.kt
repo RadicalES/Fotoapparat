@@ -1,6 +1,6 @@
 package io.fotoapparat.routine.camera
 
-import io.fotoapparat.hardware.CameraDevice
+import io.fotoapparat.hardware.CameraHardware
 import io.fotoapparat.hardware.Device
 import io.fotoapparat.hardware.orientation.OrientationSensor
 import io.fotoapparat.routine.orientation.stopMonitoring
@@ -22,10 +22,10 @@ internal fun Device.shutDown(
 /**
  * Stops the camera.
  */
-internal fun Device.stop(cameraDevice: CameraDevice) {
-    cameraDevice.stopPreview()
+internal fun Device.stop(cameraHardware: CameraHardware) {
+    cameraHardware.stopPreview()
 
-    cameraDevice.close()
+    cameraHardware.close()
 
     clearSelectedCamera()
 }

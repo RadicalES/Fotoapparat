@@ -2,6 +2,7 @@ package io.fotoapparat.selector
 
 import io.fotoapparat.parameter.FocusMode
 
+
 typealias FocusModeSelector = Iterable<FocusMode>.() -> FocusMode?
 
 /**
@@ -9,6 +10,8 @@ typealias FocusModeSelector = Iterable<FocusMode>.() -> FocusMode?
  * Otherwise provides `null`.
  */
 fun fixed(): FocusModeSelector = single(FocusMode.Fixed)
+
+fun foff(): FocusModeSelector = single(FocusMode.Off)
 
 /**
  * @return Selector function which provides a focus mode targeting infinity if available.

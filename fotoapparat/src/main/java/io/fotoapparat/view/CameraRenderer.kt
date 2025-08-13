@@ -24,4 +24,8 @@ interface CameraRenderer {
      */
     fun getPreview(): Preview
 
+    fun setScreenRotation(degrees: Int)
+
+    fun setLensRotation(degrees: Int)
+
 }

@@ -4,7 +4,7 @@ import io.fotoapparat.characteristic.LensPosition
 import io.fotoapparat.configuration.CameraConfiguration
 import io.fotoapparat.error.CameraErrorCallback
 import io.fotoapparat.exception.camera.CameraException
-import io.fotoapparat.hardware.CameraDevice
+import io.fotoapparat.hardware.CameraHardware
 import io.fotoapparat.hardware.Device
 import io.fotoapparat.hardware.orientation.OrientationSensor
 import io.fotoapparat.selector.LensPositionSelector
@@ -42,17 +42,17 @@ internal fun Device.switchCamera(
 }
 
 /**
- * Restarts the preview of 2 different [CameraDevice].
+ * Restarts the preview of 2 different [CameraHardware].
  */
 internal fun Device.restartPreview(
-        oldCameraDevice: CameraDevice,
-        orientationSensor: OrientationSensor,
-        mainThreadErrorCallback: CameraErrorCallback
+    oldCameraHardware: CameraHardware,
+    orientationSensor: OrientationSensor,
+    mainThreadErrorCallback: CameraErrorCallback
 ) {
-    stop(oldCameraDevice)
+    stop(oldCameraHardware)
 
     try {
-        start(orientationSensor)
+//        start(orientationSensor)
     } catch (e: CameraException) {
         mainThreadErrorCallback(e)
     }

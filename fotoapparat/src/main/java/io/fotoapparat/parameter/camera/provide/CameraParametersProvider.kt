@@ -4,14 +4,14 @@ import io.fotoapparat.capability.Capabilities
 import io.fotoapparat.configuration.CameraConfiguration
 import io.fotoapparat.exception.camera.InvalidConfigurationException
 import io.fotoapparat.exception.camera.UnsupportedConfigurationException
-import io.fotoapparat.hardware.CameraDevice
+import io.fotoapparat.hardware.CameraHardware
 import io.fotoapparat.parameter.Parameter
 import io.fotoapparat.parameter.Resolution
 import io.fotoapparat.parameter.camera.CameraParameters
 import io.fotoapparat.selector.*
 
 /**
- * @return [CameraParameters] which will be used by [CameraDevice].
+ * @return [CameraParameters] which will be used by [CameraHardware].
  */
 internal fun getCameraParameters(
         capabilities: Capabilities,

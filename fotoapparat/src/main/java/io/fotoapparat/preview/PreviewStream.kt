@@ -2,8 +2,7 @@
 
 package io.fotoapparat.preview
 
-import android.graphics.ImageFormat
-import android.hardware.Camera
+import android.hardware.camera2.CameraDevice
 import io.fotoapparat.hardware.frameProcessingExecutor
 import io.fotoapparat.hardware.orientation.Orientation
 import io.fotoapparat.parameter.Resolution
@@ -13,11 +12,12 @@ import java.util.*
 /**
  * Preview stream of Camera.
  */
-internal class PreviewStream(private val camera: Camera) {
+internal class PreviewStream(private val camera: CameraDevice?) {
 
     private val frameProcessors = LinkedHashSet<FrameProcessor>()
 
     private var previewResolution: Resolution? = null
+
 
     /**
      * CW orientation.
@@ -46,16 +46,16 @@ internal class PreviewStream(private val camera: Camera) {
      * Starts preview stream. After preview is started frame processors will start receiving frames.
      */
     private fun start() {
-        camera.addFrameToBuffer()
+//        camera.addFrameToBuffer()
 
-        camera.setPreviewCallbackWithBuffer { data, _ -> dispatchFrameOnBackgroundThread(data) }
+        //camera.setPreviewCallbackWithBuffer { data, _ -> dispatchFrameOnBackgroundThread(data) }
     }
 
     /**
      * Stops preview stream.
      */
     private fun stop() {
-        camera.setPreviewCallbackWithBuffer(null)
+       // camera.setPreviewCallbackWithBuffer(null)
     }
 
     /**
@@ -71,20 +71,20 @@ internal class PreviewStream(private val camera: Camera) {
         }
     }
 
-    private fun Camera.addFrameToBuffer() {
-        addCallbackBuffer(parameters.allocateBuffer())
-    }
-
-    private fun Camera.Parameters.allocateBuffer(): ByteArray {
-        ensureNv21Format()
-
-        previewResolution = Resolution(
-                previewSize.width,
-                previewSize.height
-        )
-
-        return ByteArray(previewSize.bytesPerFrame())
-    }
+//    private fun Camera.addFrameToBuffer() {
+//        addCallbackBuffer(parameters.allocateBuffer())
+//    }
+//
+//    private fun Camera.Parameters.allocateBuffer(): ByteArray {
+//        ensureNv21Format()
+//
+//        previewResolution = Resolution(
+//                previewSize.width,
+//                previewSize.height
+//        )
+//
+//        return ByteArray(previewSize.bytesPerFrame())
+//    }
 
     private fun dispatchFrameOnBackgroundThread(data: ByteArray) {
         frameProcessingExecutor.execute {
@@ -115,18 +115,18 @@ internal class PreviewStream(private val camera: Camera) {
                     ?: throw IllegalStateException("previewSize is null. Frame was not added?")
 
     private fun returnFrameToBuffer(frame: Frame) {
-        camera.addCallbackBuffer(
-                frame.image
-        )
+//        camera.addCallbackBuffer(
+//                frame.image
+//        )
     }
 
 }
 
-private fun Camera.Size.bytesPerFrame(): Int =
-        width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8
-
-private fun Camera.Parameters.ensureNv21Format() {
-    if (previewFormat != ImageFormat.NV21) {
-        throw UnsupportedOperationException("Only NV21 preview format is supported")
-    }
-}
+//private fun Camera.Size.bytesPerFrame(): Int =
+//        width * height * ImageFormat.getBitsPerPixel(ImageFormat.NV21) / 8
+//
+//private fun Camera.Parameters.ensureNv21Format() {
+//    if (previewFormat != ImageFormat.NV21) {
+//        throw UnsupportedOperationException("Only NV21 preview format is supported")
+//    }
+//}

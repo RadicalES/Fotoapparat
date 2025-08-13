@@ -1,13 +1,13 @@
 package io.fotoapparat.routine.camera
 
-import io.fotoapparat.concurrent.CameraExecutor.Operation
+import android.util.Log
+import io.fotoapparat.concurrent.CameraExecutor
 import io.fotoapparat.error.CameraErrorCallback
 import io.fotoapparat.exception.camera.CameraException
 import io.fotoapparat.hardware.Device
 import io.fotoapparat.hardware.orientation.OrientationSensor
 import io.fotoapparat.routine.focus.focusOnPoint
 import io.fotoapparat.routine.orientation.startOrientationMonitoring
-import java.io.IOException
 
 /**
  * Starts the camera from idle.
@@ -15,8 +15,9 @@ import java.io.IOException
 internal fun Device.bootStart(
         orientationSensor: OrientationSensor,
         mainThreadErrorCallback: CameraErrorCallback
-) {
+)  {
     if (hasSelectedCamera()) {
+        Log.w("Device.bootStart", "bootStart: camera already started")
         throw IllegalStateException("Camera has already started!")
     }
 
@@ -36,18 +37,20 @@ internal fun Device.bootStart(
  * Starts the camera.
  */
 internal fun Device.start(orientationSensor: OrientationSensor) {
+
     selectCamera()
 
-    val cameraDevice = getSelectedCamera().apply {
+    val cameraDeviceHW = getSelectedCamera().apply {
         open()
 
         updateCameraConfiguration(
-                cameraDevice = this
+                cameraHardware = this
         )
+
         setDisplayOrientation(orientationSensor.lastKnownOrientationState)
     }
 
-    val previewResolution = cameraDevice.getPreviewResolution()
+    val previewResolution = cameraDeviceHW.getPreviewResolution()
 
     cameraRenderer.apply {
         setScaleType(
@@ -57,23 +60,28 @@ internal fun Device.start(orientationSensor: OrientationSensor) {
         setPreviewResolution(
                 resolution = previewResolution
         )
+
+        setLensRotation(
+            degrees = cameraDeviceHW.characteristics.lensRotation
+        )
     }
 
     focusPointSelector?.setFocalPointListener { focalRequest ->
-        executor.execute(Operation(cancellable = true) {
+        executor.execute(CameraExecutor.Operation(cancellable = true) {
             focusOnPoint(focalRequest)
         })
     }
 
-    with(cameraDevice) {
-        try {
-            setDisplaySurface(
-                    preview = cameraRenderer.getPreview()
-            )
+    with(cameraDeviceHW) {
 
-            startPreview()
-        } catch (e: IOException) {
-            logger.log("Can't start preview because of the exception: $e")
-        }
+        setDisplaySurface(
+            preview = cameraRenderer.getPreview()
+        )
+
+        startPreview()
+    }
+
+    cameraRenderer.apply {
+//        setRotation(degrees = 90)
     }
 }

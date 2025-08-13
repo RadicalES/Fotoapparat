@@ -12,6 +12,7 @@ import io.fotoapparat.hardware.Device
 import io.fotoapparat.hardware.display.Display
 import io.fotoapparat.hardware.orientation.OrientationSensor
 import io.fotoapparat.log.Logger
+import io.fotoapparat.log.logcat
 import io.fotoapparat.log.none
 import io.fotoapparat.parameter.ScaleType
 import io.fotoapparat.result.*
@@ -27,13 +28,16 @@ import io.fotoapparat.routine.zoom.updateZoomLevel
 import io.fotoapparat.selector.*
 import io.fotoapparat.view.CameraRenderer
 import io.fotoapparat.view.FocalPointSelector
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+
 
 /**
  * Camera. Takes pictures.
  */
 class Fotoapparat
 @JvmOverloads constructor(
-        context: Context,
+        private val context: Context,
         view: CameraRenderer,
         focusView: FocalPointSelector? = null,
         lensPosition: LensPositionSelector = firstAvailable(
@@ -45,14 +49,17 @@ class Fotoapparat
         cameraConfiguration: CameraConfiguration = CameraConfiguration.default(),
         cameraErrorCallback: CameraErrorCallback = {},
         private val executor: CameraExecutor = EXECUTOR,
-        private val logger: Logger = none()
+        private val logger: Logger = logcat()
 ) {
 
     private val mainThreadErrorCallback = cameraErrorCallback.onMainThread()
 
+    private val componentScope = CoroutineScope(Dispatchers.Main)
+
     private val display = Display(context)
 
     private val device = Device(
+            context,
             cameraRenderer = view,
             focusPointSelector = focusView,
             logger = logger,
@@ -79,7 +86,7 @@ class Fotoapparat
      *
      * @throws IllegalStateException If the camera has already started.
      */
-    fun start() {
+    fun start()  {
         logger.recordMethod()
 
         executor.execute(Operation {

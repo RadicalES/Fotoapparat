@@ -1,9 +1,11 @@
 package io.fotoapparat.routine.orientation
 
+import android.util.Log
 import io.fotoapparat.concurrent.CameraExecutor.Operation
 import io.fotoapparat.hardware.Device
 import io.fotoapparat.hardware.orientation.OrientationSensor
 import io.fotoapparat.hardware.orientation.OrientationState
+import io.fotoapparat.util.lineSeparator
 
 /**
  * Starts orientation monitoring routine.
@@ -15,6 +17,9 @@ internal fun Device.startOrientationMonitoring(
         executor.execute(Operation(cancellable = true) {
             val cameraDevice = getSelectedCamera()
             cameraDevice.setDisplayOrientation(orientationState)
+            cameraRenderer.setRotation(orientationState.screenOrientation.degrees)
+            Log.d("ORIENTATION", "changed screen = ${orientationState.screenOrientation}" +
+                    "${lineSeparator}device = ${orientationState.deviceOrientation}")
         })
     }
 }
