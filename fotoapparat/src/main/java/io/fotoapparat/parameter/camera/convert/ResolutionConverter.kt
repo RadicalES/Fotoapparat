@@ -2,10 +2,10 @@
 
 package io.fotoapparat.parameter.camera.convert
 
-import android.hardware.Camera
 import io.fotoapparat.parameter.Resolution
+import android.util.Size
 
 /**
  * Converts [Camera.Size] to [Resolution].
  */
-fun Camera.Size.toResolution(): Resolution = Resolution(width, height)
+fun Size.toResolution(): Resolution = Resolution(width, height)

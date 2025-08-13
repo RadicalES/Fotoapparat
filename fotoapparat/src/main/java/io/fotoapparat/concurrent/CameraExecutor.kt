@@ -1,5 +1,7 @@
 package io.fotoapparat.concurrent
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
@@ -13,7 +15,8 @@ import java.util.concurrent.Future
  * This class should be accessed only from a one thread at a time.
  */
 class CameraExecutor(
-        private val executor: ExecutorService = Executors.newSingleThreadExecutor()
+        private val executor: ExecutorService = Executors.newSingleThreadExecutor(),
+        val dispatcher: CoroutineDispatcher = executor.asCoroutineDispatcher()
 ) {
 
     private val cancellableTasksQueue = LinkedList<Future<*>>()

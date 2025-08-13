@@ -11,16 +11,16 @@ import io.fotoapparat.parameter.FocusMode
  *
  * @receiver Code of focus mode as in [Camera.Parameters].
  * @return [FocusMode] from given camera code. `null` if camera code is not supported.
+ *
  */
 internal fun String.toFocusMode(): FocusMode? =
         when (this) {
-            Camera.Parameters.FOCUS_MODE_EDOF -> FocusMode.Edof
-            Camera.Parameters.FOCUS_MODE_AUTO -> FocusMode.Auto
-            Camera.Parameters.FOCUS_MODE_MACRO -> FocusMode.Macro
-            Camera.Parameters.FOCUS_MODE_FIXED -> FocusMode.Fixed
-            Camera.Parameters.FOCUS_MODE_INFINITY -> FocusMode.Infinity
-            Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO -> FocusMode.ContinuousFocusVideo
-            Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE -> FocusMode.ContinuousFocusPicture
+            "EDOF" -> FocusMode.Edof
+            "AUTO" -> FocusMode.Auto
+            "MACRO" -> FocusMode.Macro
+            "FIXED" -> FocusMode.Fixed
+            "OFF" -> FocusMode.Off
+            "CONTINUOUS" -> FocusMode.ContinuousFocusVideo
             else -> null
         }
 
@@ -32,11 +32,12 @@ internal fun String.toFocusMode(): FocusMode? =
  */
 internal fun FocusMode.toCode(): String =
         when (this) {
-            FocusMode.Edof -> Camera.Parameters.FOCUS_MODE_EDOF
-            FocusMode.Auto -> Camera.Parameters.FOCUS_MODE_AUTO
-            FocusMode.Macro -> Camera.Parameters.FOCUS_MODE_MACRO
-            FocusMode.Fixed -> Camera.Parameters.FOCUS_MODE_FIXED
-            FocusMode.Infinity -> Camera.Parameters.FOCUS_MODE_INFINITY
-            FocusMode.ContinuousFocusVideo -> Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO
-            FocusMode.ContinuousFocusPicture -> Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE
+            FocusMode.Edof -> "EDOF"
+            FocusMode.Auto -> "AUTO"
+            FocusMode.Macro -> "MACRO"
+            FocusMode.Fixed -> "FIXED"
+            FocusMode.ContinuousFocusVideo -> "CONTINUOUS"
+            FocusMode.Off -> "OFF"
+            FocusMode.ContinuousFocusPicture -> "UNKNOWN"
+            FocusMode.Infinity -> "UNKNOWN"
         }

@@ -1,18 +1,23 @@
-@file:Suppress("DEPRECATION")
 
 package io.fotoapparat.capability.provide
 
-import android.hardware.Camera
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
+import android.util.Size
+
 import io.fotoapparat.capability.Capabilities
 import io.fotoapparat.parameter.SupportedParameters
 import io.fotoapparat.parameter.camera.convert.*
 
 /**
- * Returns the [io.fotoapparat.capability.Capabilities] of the given [Camera].
+ * Returns the [io.fotoapparat.capability.Capabilities] of the given [Camera2].
  */
-internal fun Camera.getCapabilities() = SupportedParameters(parameters).getCapabilities()
+//internal fun Camera.getCapabilities() = SupportedParameters(parameters).getCapabilities()
+internal fun cameraDeviceGetCapabilities(cameraCharacteristics: CameraCharacteristics) =
+        SupportedParameters(cameraCharacteristics).getCapabilities()
 
-private fun SupportedParameters.getCapabilities(): Capabilities {
+internal fun SupportedParameters.getCapabilities(): Capabilities {
     return Capabilities(
             zoom = supportedZoom,
             flashModes = flashModes.extract { it.toFlash() },
@@ -22,7 +27,7 @@ private fun SupportedParameters.getCapabilities(): Capabilities {
             maxMeteringAreas = maxNumMeteringAreas,
             jpegQualityRange = jpegQualityRange,
             exposureCompensationRange = exposureCompensationRange,
-            antiBandingModes = supportedAutoBandingModes.extract(String::toAntiBandingMode),
+            antiBandingModes = supportedAutoBandingModes.extract(Int::toAntiBandingMode),
             sensorSensitivities = sensorSensitivities.toSet(),
             previewFpsRanges = supportedPreviewFpsRanges.extract { it.toFpsRange() },
             pictureResolutions = pictureResolutions.mapSizes(),
@@ -32,4 +37,4 @@ private fun SupportedParameters.getCapabilities(): Capabilities {
 
 private fun <Parameter : Any, Code> List<Code>.extract(converter: (Code) -> Parameter?) = mapNotNull { converter(it) }.toSet()
 
-private fun Collection<Camera.Size>.mapSizes() = map { it.toResolution() }.toSet()
+private fun Collection<Size>.mapSizes() = map { it.toResolution() }.toSet()

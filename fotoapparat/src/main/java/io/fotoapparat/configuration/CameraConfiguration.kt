@@ -13,6 +13,7 @@ private const val DEFAULT_EXPOSURE_COMPENSATION = 0
 data class CameraConfiguration(
         override val flashMode: FlashSelector = off(),
         override val focusMode: FocusModeSelector = firstAvailable(
+                foff(),
                 continuousFocusPicture(),
                 autoFocus(),
                 fixed(),

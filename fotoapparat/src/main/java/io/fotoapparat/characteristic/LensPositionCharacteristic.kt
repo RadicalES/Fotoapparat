@@ -2,7 +2,7 @@
 
 package io.fotoapparat.characteristic
 
-import android.hardware.Camera
+import android.hardware.camera2.CameraCharacteristics
 import io.fotoapparat.exception.camera.CameraException
 
 /**
@@ -17,13 +17,21 @@ private const val CAMERA_FACING_EXTERNAL = 2
  * @return [LensPosition] from the given lens position code id.
  * `null` if position code id is not supported.
  */
+//internal fun Int.toLensPosition(): LensPosition =
+//        when (this) {
+//            Camera.CameraInfo.CAMERA_FACING_FRONT -> LensPosition.Front
+//            Camera.CameraInfo.CAMERA_FACING_BACK -> LensPosition.Back
+//            CAMERA_FACING_EXTERNAL -> LensPosition.External
+//            else -> throw IllegalArgumentException("Lens position $this is not supported.")
+//        }
+
 internal fun Int.toLensPosition(): LensPosition =
-        when (this) {
-            Camera.CameraInfo.CAMERA_FACING_FRONT -> LensPosition.Front
-            Camera.CameraInfo.CAMERA_FACING_BACK -> LensPosition.Back
-            CAMERA_FACING_EXTERNAL -> LensPosition.External
-            else -> throw IllegalArgumentException("Lens position $this is not supported.")
-        }
+    when (this) {
+        CameraCharacteristics.LENS_FACING_BACK -> LensPosition.Front
+        CameraCharacteristics.LENS_FACING_FRONT -> LensPosition.Back
+        CameraCharacteristics.LENS_FACING_EXTERNAL -> LensPosition.External
+        else -> throw IllegalArgumentException("Lens position $this is not supported.")
+    }
 
 /**
  * Maps between [LensPosition] and Camera v1 code id.
@@ -31,9 +39,9 @@ internal fun Int.toLensPosition(): LensPosition =
  * @receiver [LensPosition]
  * @return code of the camera as in [Camera.CameraInfo].
  */
-fun LensPosition.toCameraId(): Int =
-        (0 until Camera.getNumberOfCameras())
-                .find { cameraId ->
-                    this == getCharacteristics(cameraId).lensPosition
-                }
-                ?: throw CameraException("Device has no camera for the desired lens position(s).")
+//fun LensPosition.toCameraId(): Int =
+//        (0 until Camera.getNumberOfCameras())
+//                .find { cameraId ->
+//                    this == getCharacteristics(cameraId).lensPosition
+//                }
+//                ?: throw CameraException("Device has no camera for the desired lens position(s).")

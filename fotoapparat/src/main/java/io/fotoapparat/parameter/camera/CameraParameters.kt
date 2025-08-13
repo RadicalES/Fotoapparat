@@ -1,12 +1,12 @@
 package io.fotoapparat.parameter.camera
 
-import io.fotoapparat.hardware.CameraDevice
+import io.fotoapparat.hardware.CameraHardware
 import io.fotoapparat.parameter.*
 import io.fotoapparat.util.lineSeparator
 import io.fotoapparat.util.wrap
 
 /**
- * Parameters of [CameraDevice].
+ * Parameters of [CameraHardware].
  */
 data class CameraParameters(
         val flashMode: Flash,

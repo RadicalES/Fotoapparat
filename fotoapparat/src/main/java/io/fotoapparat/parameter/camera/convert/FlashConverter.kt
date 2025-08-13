@@ -13,11 +13,11 @@ import io.fotoapparat.parameter.Flash
  */
 internal fun String.toFlash(): Flash? =
         when (this) {
-            Camera.Parameters.FLASH_MODE_ON -> Flash.On
-            Camera.Parameters.FLASH_MODE_OFF -> Flash.Off
-            Camera.Parameters.FLASH_MODE_AUTO -> Flash.Auto
-            Camera.Parameters.FLASH_MODE_TORCH -> Flash.Torch
-            Camera.Parameters.FLASH_MODE_RED_EYE -> Flash.AutoRedEye
+            "ON" -> Flash.On
+            "OFF" -> Flash.Off
+            "AUTO" -> Flash.Auto
+            "TORCH" -> Flash.Torch
+            "REDEYE" -> Flash.AutoRedEye
             else -> null
         }
 

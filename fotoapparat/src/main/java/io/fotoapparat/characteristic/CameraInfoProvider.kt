@@ -2,20 +2,24 @@
 
 package io.fotoapparat.characteristic
 
-import android.hardware.Camera
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import io.fotoapparat.hardware.orientation.toOrientation
 
 /**
  * Returns the [Characteristics] for the given `cameraId`.
  */
-internal fun getCharacteristics(cameraId: Int): Characteristics {
-    val info = Camera.CameraInfo()
-    Camera.getCameraInfo(cameraId, info)
-    val lensPosition = info.facing.toLensPosition()
+internal fun getCharacteristics(cameraManager: CameraManager, cameraId: String): Characteristics {
+    val camCharacteristic = cameraManager.getCameraCharacteristics(cameraId)
+    val lensPosition = camCharacteristic.get(CameraCharacteristics.LENS_FACING)!!.toLensPosition()
+    val lensRotation = camCharacteristic.get(CameraCharacteristics.SENSOR_ORIENTATION)!!
+    val orientation = lensRotation.toOrientation()
+
     return Characteristics(
             cameraId = cameraId,
             lensPosition = lensPosition,
-            cameraOrientation = info.orientation.toOrientation(),
+            lensRotation = lensRotation,
+            cameraOrientation = orientation,
             isMirrored = lensPosition == LensPosition.Front
     )
 }

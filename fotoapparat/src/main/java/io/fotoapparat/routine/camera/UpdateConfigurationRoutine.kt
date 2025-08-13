@@ -1,7 +1,7 @@
 package io.fotoapparat.routine.camera
 
 import io.fotoapparat.configuration.Configuration
-import io.fotoapparat.hardware.CameraDevice
+import io.fotoapparat.hardware.CameraHardware
 import io.fotoapparat.hardware.Device
 import kotlinx.coroutines.runBlocking
 
@@ -13,23 +13,23 @@ internal fun Device.updateDeviceConfiguration(newConfiguration: Configuration) {
 
     updateConfiguration(newConfiguration)
 
-    updateCameraConfiguration(cameraDevice = cameraDevice)
+    updateCameraConfiguration(cameraHardware = cameraDevice)
 }
 
 /**
- * Updates [CameraDevice] parameters.
+ * Updates [CameraHardware] parameters.
  */
 internal fun Device.updateCameraConfiguration(
-        cameraDevice: CameraDevice
+    cameraHardware: CameraHardware
 ) = runBlocking {
-    val cameraParameters = getCameraParameters(cameraDevice)
+    val cameraParameters = getCameraParameters(cameraHardware)
     val frameProcessor = getFrameProcessor()
 
-    cameraDevice.updateParameters(
+    cameraHardware.updateParameters(
             cameraParameters = cameraParameters
     )
 
-    cameraDevice.updateFrameProcessor(
+    cameraHardware.updateFrameProcessor(
             frameProcessor = frameProcessor
     )
 }
