@@ -26,6 +26,7 @@ import io.fotoapparat.capability.Capabilities
 import io.fotoapparat.capability.provide.getCapabilities
 import io.fotoapparat.characteristic.Characteristics
 import io.fotoapparat.coroutines.AwaitBroadcastChannel
+import io.fotoapparat.hardware.display.DeviceDisplay
 import io.fotoapparat.hardware.metering.FocalRequest
 import io.fotoapparat.hardware.orientation.*
 import io.fotoapparat.log.Logger
@@ -36,9 +37,11 @@ import io.fotoapparat.parameter.camera.convert.toResolution
 import io.fotoapparat.preview.PreviewStream
 import io.fotoapparat.result.FocusResult
 import io.fotoapparat.result.Photo
+import io.fotoapparat.util.CameraUtils
 import io.fotoapparat.util.FrameProcessor
 import io.fotoapparat.util.lineSeparator
 import io.fotoapparat.view.Preview
+import io.fotoapparat.view.toTextureView
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +60,7 @@ typealias PreviewSize = io.fotoapparat.parameter.Resolution
 internal open class CameraHardware(
         private val cameraManager: CameraManager,
         private val logger: Logger,
+        private val display: DeviceDisplay,
         val characteristics: Characteristics
 ) {
 
@@ -68,7 +72,8 @@ internal open class CameraHardware(
 
     private var cameraCompletable = CompletableDeferred<CameraDevice>()
     private var sessionCompletable = CompletableDeferred<CameraCaptureSession>()
-    private lateinit var camera: CameraDevice
+    private var cameraDevice: CameraDevice? = null
+    private var previewRender: Preview? = null
     private lateinit var previewStream: PreviewStream
     private lateinit var surface: Surface
     private lateinit var cameraSession: CameraCaptureSession
@@ -135,7 +140,7 @@ internal open class CameraHardware(
 
         waitForCamera()
         getCamCapabilities(cameraCharacteristics)
-        previewStream = PreviewStream(camera)
+        previewStream = PreviewStream(cameraDevice)
 
         Log.d(TAG, "open: complete")
     }
@@ -147,7 +152,7 @@ internal open class CameraHardware(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun waitForCamera() = runBlocking {
         cameraCompletable.await()
-        camera = cameraCompletable.getCompleted()
+        cameraDevice = cameraCompletable.getCompleted()
         Log.d(TAG, "waitForCamera: complete")
     }
 
@@ -158,7 +163,7 @@ internal open class CameraHardware(
     open fun close() {
         logger.recordMethod()
         surface.release()
-        camera.close()
+        cameraDevice?.close()
     }
 
     /**
@@ -172,18 +177,17 @@ internal open class CameraHardware(
         val cx = rect.centerX()
         val cy = rect.centerY()
         val rd = displayOrientation.degrees.toFloat() + 90F
-        val targets = listOf(surface)
 
-        createCaptureSession(camera, targets, cameraHandler)
 
+        createCaptureSession()
         waitForSession()
 
-        val captureRequest = camera.createCaptureRequest(
-            CameraDevice.TEMPLATE_PREVIEW).apply {
-                addTarget(surface)
-//                rotationMatrix(rd, cx, cy)
-            }
-        cameraSession.setRepeatingRequest(captureRequest.build(), null, cameraHandler)
+//        val captureRequest = camera.createCaptureRequest(
+//            CameraDevice.TEMPLATE_PREVIEW).apply {
+//                addTarget(surface)
+////                rotationMatrix(rd, cx, cy)
+//            }
+//        cameraSession.setRepeatingRequest(captureRequest.build(), null, cameraHandler)
 
 //        try {
 //            camera.startPreview()
@@ -330,11 +334,12 @@ internal open class CameraHardware(
                 cameraIsMirrored = characteristics.isMirrored
         )
 
-        displayOrientation = computeDisplayOrientation(
-                screenOrientation = orientationState.screenOrientation,
-                cameraOrientation = characteristics.cameraOrientation,
-                cameraIsMirrored = characteristics.isMirrored
-        )
+//        displayOrientation = computeDisplayOrientation(
+//                screenOrientation = orientationState.screenOrientation,
+//                cameraOrientation = characteristics.cameraOrientation,
+//                cameraIsMirrored = characteristics.isMirrored
+//        )
+        displayOrientation = orientationState.screenOrientation
 
         previewOrientation = computePreviewOrientation(
                 screenOrientation = orientationState.screenOrientation,
@@ -355,7 +360,7 @@ internal open class CameraHardware(
         )
 
         previewStream.frameOrientation = previewOrientation
-//        camera.setDisplayOrientation(displayOrientation.degrees)
+        createCaptureSession()
     }
 
     /**
@@ -365,7 +370,6 @@ internal open class CameraHardware(
      */
     open fun setZoom(@FloatRange(from = 0.0, to = 1.0) level: Float) {
         logger.recordMethod()
-
         setZoomSafely(level)
     }
 
@@ -406,7 +410,7 @@ internal open class CameraHardware(
     @Throws(IOException::class)
     open fun setDisplaySurface(preview: Preview) {
         logger.recordMethod()
-        surface = camera.setDisplaySurface(preview)
+        this.previewRender = preview
     }
 
     /**
@@ -438,17 +442,6 @@ internal open class CameraHardware(
             logger.log("Unable to change zoom level to " + level + " e: " + e.message)
         }
     }
-
-//    private fun getDisplayRotation(): Int {
-//        previewOrientation
-//        return when (textureView.getDisplay().getRotation()) {
-//            Surface.ROTATION_0 -> 0
-//            Surface.ROTATION_90 -> 90
-//            Surface.ROTATION_180 -> 180
-//            Surface.ROTATION_270 -> 270
-//            else -> 0
-//        }
-//    }
 
     private fun setZoomUnsafe(@FloatRange(from = 0.0, to = 1.0) level: Float) {
 //        (cachedCameraParameters ?: camera.parameters)
@@ -516,49 +509,45 @@ internal open class CameraHardware(
 //        }
 //    }
 
-//    private fun isDimensionSwapped(): Boolean {
-//
-//        val sensorOrientation = getCameraCharacteristics().get(CameraCharacteristics.SENSOR_ORIENTATION)
-//        var swappedDimensions = false
-//        when (displayOrientation) {
-//            Surface.ROTATION_0, Surface.ROTATION_180 -> {
-//                if (sensorOrientation == 90 || sensorOrientation == 270) {
-//                    swappedDimensions = true
-//                }
-//            }
-//
-//            Surface.ROTATION_90, Surface.ROTATION_270 -> {
-//                if (sensorOrientation == 0 || sensorOrientation == 180) {
-//                    swappedDimensions = true
-//                }
-//            }
-//
-//        }
-//        return swappedDimensions
-//    }
 
-    private fun createCaptureSession(
-        device: CameraDevice,
-        targets: List<Surface>,
-        handler: Handler? = null
-    ) {
-
-        // Create a capture session using the predefined targets; this also involves defining the
-        // session state callback to be notified of when the session is ready
-        device.createCaptureSession(targets, object : CameraCaptureSession.StateCallback() {
-
-            override fun onConfigured(session: CameraCaptureSession) {
-                sessionCompletable.complete(session)
-                Log.d(TAG, "onConfigured: camera capture session created!")
+    private val sessionStateCallback = object : CameraCaptureSession.StateCallback() {
+        override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
+            try {
+                val captureRequest = cameraDevice?.createCaptureRequest(
+                    CameraDevice.TEMPLATE_PREVIEW
+                )
+                captureRequest?.addTarget(surface)
+                cameraCaptureSession.setRepeatingRequest(
+                    captureRequest?.build()!!, null, cameraHandler
+                )
+                sessionCompletable.complete(cameraCaptureSession)
+            } catch (t: Throwable) {
+                Log.e(TAG, "Failed to open camera preview.", t)
             }
 
-            override fun onConfigureFailed(session: CameraCaptureSession) {
-                val exc = RuntimeException("Camera ${device.id} session configuration failed")
-                Log.e(TAG, exc.message, exc)
-                sessionCompletable.completeExceptionally(exc)
-            }
-        }, handler)
+        }
 
+        override fun onConfigureFailed(cameraCaptureSession: CameraCaptureSession) {
+            val exc = RuntimeException("Camera ${cameraDevice?.id} session configuration failed")
+            Log.e(TAG, exc.message, exc)
+            sessionCompletable.completeExceptionally(exc)
+        }
+    }
+
+    private fun createCaptureSession() {
+
+        if(cameraDevice == null || previewRender == null) return
+
+
+        val transformedTexture = CameraUtils.buildTargetTextureFromOrientation(
+            previewRender!!.toTextureView(),
+            getCameraCharacteristics(),
+            characteristics.cameraOrientation,
+            displayOrientation
+        )
+        this.surface = Surface(transformedTexture)
+        val targetList = listOf(surface)
+        this.cameraDevice?.createCaptureSession(targetList, sessionStateCallback, cameraHandler)
     }
 
 
@@ -588,18 +577,6 @@ private const val AUTOFOCUS_TIMEOUT_SECONDS = 3L
 //    return photoReference.get()
 //}
 
-@Throws(IOException::class)
-private fun CameraDevice.setDisplaySurface(
-        preview: Preview
-): Surface = when (preview) {
-    is Preview.Texture -> preview.surfaceTexture
-          //  .also(this::setPreviewTexture)
-            .let(::Surface)
-
-    is Preview.Surface -> preview.surfaceHolder
-//            .also(this::setPreviewDisplay)
-            .surface
-}
 
 
 private fun CameraHardware.getPreviewResolution(previewOrientation: Orientation): Resolution {

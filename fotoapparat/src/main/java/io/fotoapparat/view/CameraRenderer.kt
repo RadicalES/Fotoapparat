@@ -1,5 +1,6 @@
 package io.fotoapparat.view
 
+import io.fotoapparat.characteristic.LensPosition
 import io.fotoapparat.parameter.Resolution
 import io.fotoapparat.parameter.ScaleType
 
@@ -23,9 +24,5 @@ interface CameraRenderer {
      * Returns the surface texture when available.
      */
     fun getPreview(): Preview
-
-    fun setScreenRotation(degrees: Int)
-
-    fun setLensRotation(degrees: Int)
 
 }

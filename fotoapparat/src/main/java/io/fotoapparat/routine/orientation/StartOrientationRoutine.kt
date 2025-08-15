@@ -17,9 +17,6 @@ internal fun Device.startOrientationMonitoring(
         executor.execute(Operation(cancellable = true) {
             val cameraDevice = getSelectedCamera()
             cameraDevice.setDisplayOrientation(orientationState)
-            cameraRenderer.setRotation(orientationState.screenOrientation.degrees)
-            Log.d("ORIENTATION", "changed screen = ${orientationState.screenOrientation}" +
-                    "${lineSeparator}device = ${orientationState.deviceOrientation}")
         })
     }
 }

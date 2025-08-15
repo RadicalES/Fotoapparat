@@ -9,11 +9,10 @@ import io.fotoapparat.configuration.Configuration
 import io.fotoapparat.error.CameraErrorCallback
 import io.fotoapparat.error.onMainThread
 import io.fotoapparat.hardware.Device
-import io.fotoapparat.hardware.display.Display
+import io.fotoapparat.hardware.display.DeviceDisplay
 import io.fotoapparat.hardware.orientation.OrientationSensor
 import io.fotoapparat.log.Logger
 import io.fotoapparat.log.logcat
-import io.fotoapparat.log.none
 import io.fotoapparat.parameter.ScaleType
 import io.fotoapparat.result.*
 import io.fotoapparat.routine.camera.bootStart
@@ -56,14 +55,14 @@ class Fotoapparat
 
     private val componentScope = CoroutineScope(Dispatchers.Main)
 
-    private val display = Display(context)
+    private val deviceDisplay = DeviceDisplay(context)
 
     private val device = Device(
             context,
             cameraRenderer = view,
             focusPointSelector = focusView,
             logger = logger,
-            display = display,
+            deviceDisplay = deviceDisplay,
             scaleType = scaleType,
             initialLensPositionSelector = lensPosition,
             initialConfiguration = cameraConfiguration,

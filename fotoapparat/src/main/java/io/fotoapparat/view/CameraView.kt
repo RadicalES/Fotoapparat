@@ -5,12 +5,12 @@ import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.SurfaceTexture
-import android.hardware.camera2.CameraCharacteristics
 import android.util.AttributeSet
 import android.view.Surface
 import android.view.TextureView
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import io.fotoapparat.characteristic.LensPosition
 import io.fotoapparat.exception.camera.UnavailableSurfaceException
 import io.fotoapparat.hardware.orientation.toSurface
 import io.fotoapparat.parameter.Resolution
@@ -32,9 +32,6 @@ class CameraView
 
     private lateinit var previewResolution: Resolution
     private lateinit var scaleType: ScaleType
-    private var screenRotation: Int = Surface.ROTATION_0
-    private var lensRotation: Int = Surface.ROTATION_0
-
     private var surfaceTexture: SurfaceTexture? = textureView.tryInitialize()
 
     init {
@@ -60,44 +57,8 @@ class CameraView
     }
 
     override fun getPreview(): Preview {
-        return surfaceTexture?.toPreview() ?: getPreviewAfterLatch()
-    }
-
-    override fun setScreenRotation(degrees: Int) {
-        this.screenRotation = degrees.toSurface()
-        configureTransform(previewResolution.width, previewResolution.height)
-    }
-
-    override fun setLensRotation(degrees: Int) {
-        this.lensRotation = degrees.toSurface()
-    }
-
-    private fun computeRelativeRotation(deviceRotation: Int): Int {
-        CameraCharacteristics.LENS_FACING
-    }
-
-    private fun configureTransform(viewWidth: Int, viewHeight: Int) {
-        val matrix = Matrix()
-        val width = previewResolution.width.toFloat()
-        val height = previewResolution.height.toFloat()
-        val viewRect = RectF(0f, 0f, viewWidth.toFloat(), viewHeight.toFloat())
-        val bufferRect = RectF(0f, 0f, height, width)
-        val centerX = viewRect.centerX()
-        val centerY = viewRect.centerY()
-
-        if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
-            bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY())
-            matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL)
-            val scale: Float = Math.max(
-                viewHeight.toFloat() / height,
-                viewWidth.toFloat() / width
-            )
-//            matrix.postScale(scale, scale, centerX, centerY)
-            matrix.postRotate((90 * (rotation - 2)).toFloat(), centerX, centerY)
-        }
-
-
-        textureView.setTransform(matrix)
+        val pv = surfaceTexture?.toPreview() ?: getPreviewAfterLatch()
+        return textureView.toPreview()
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {

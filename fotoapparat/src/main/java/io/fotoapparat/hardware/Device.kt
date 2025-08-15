@@ -12,7 +12,7 @@ import io.fotoapparat.concurrent.CameraExecutor
 import io.fotoapparat.configuration.CameraConfiguration
 import io.fotoapparat.configuration.Configuration
 import io.fotoapparat.exception.camera.UnsupportedLensException
-import io.fotoapparat.hardware.display.Display
+import io.fotoapparat.hardware.display.DeviceDisplay
 import io.fotoapparat.hardware.orientation.Orientation
 import io.fotoapparat.log.Logger
 import io.fotoapparat.parameter.ScaleType
@@ -30,7 +30,7 @@ import kotlinx.coroutines.CompletableDeferred
 internal open class Device(
     private val context: Context,
     internal open val logger: Logger,
-    private val display: Display,
+    private val deviceDisplay: DeviceDisplay,
     internal open val scaleType: ScaleType,
     internal open val cameraRenderer: CameraRenderer,
     internal val focusPointSelector: FocalPointSelector?,
@@ -51,6 +51,7 @@ internal open class Device(
         CameraHardware(
             cameraManager,
             logger = logger,
+            display = deviceDisplay,
             characteristics = getCharacteristics(cameraManager, camItem.cameraId)
         )
     }
@@ -122,7 +123,11 @@ internal open class Device(
      * @return Orientation of the screen.
      */
     open fun getScreenOrientation(): Orientation {
-        return display.getOrientation()
+        return deviceDisplay.getOrientation()
+    }
+
+    open fun getScreenRotation(): Int {
+        return deviceDisplay.getRotation()
     }
 
     /**

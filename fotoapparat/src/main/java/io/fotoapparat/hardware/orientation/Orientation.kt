@@ -55,6 +55,15 @@ sealed class Orientation(
     }
 }
 
+internal fun Orientation.toSurface(): Int {
+    return when (this) {
+        Orientation.Vertical.Portrait -> Surface.ROTATION_0
+        Orientation.Horizontal.Landscape -> Surface.ROTATION_90
+        Orientation.Vertical.ReversePortrait -> Surface.ROTATION_180
+        Orientation.Horizontal.ReverseLandscape -> Surface.ROTATION_270
+    }
+}
+
 internal fun Int.toOrientation(): Orientation {
     return when (this) {
         0, 360 -> Orientation.Vertical.Portrait

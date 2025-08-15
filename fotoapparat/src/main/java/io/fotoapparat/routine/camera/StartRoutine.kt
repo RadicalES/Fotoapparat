@@ -61,9 +61,6 @@ internal fun Device.start(orientationSensor: OrientationSensor) {
                 resolution = previewResolution
         )
 
-        setLensRotation(
-            degrees = cameraDeviceHW.characteristics.lensRotation
-        )
     }
 
     focusPointSelector?.setFocalPointListener { focalRequest ->
