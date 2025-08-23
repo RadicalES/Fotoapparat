@@ -3,17 +3,14 @@
 package io.fotoapparat.hardware
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.graphics.Matrix
-import android.graphics.RectF
+
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
-import android.hardware.camera2.params.OutputConfiguration
-import android.hardware.camera2.params.SessionConfiguration
+import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.StreamConfigurationMap
 import android.media.MediaRecorder
 import android.os.Handler
@@ -21,12 +18,10 @@ import android.os.HandlerThread
 import android.util.Log
 import android.view.Surface
 import androidx.annotation.FloatRange
-import androidx.core.graphics.rotationMatrix
 import io.fotoapparat.capability.Capabilities
 import io.fotoapparat.capability.provide.getCapabilities
 import io.fotoapparat.characteristic.Characteristics
 import io.fotoapparat.coroutines.AwaitBroadcastChannel
-import io.fotoapparat.hardware.display.DeviceDisplay
 import io.fotoapparat.hardware.metering.FocalRequest
 import io.fotoapparat.hardware.orientation.*
 import io.fotoapparat.log.Logger
@@ -43,13 +38,9 @@ import io.fotoapparat.util.lineSeparator
 import io.fotoapparat.view.Preview
 import io.fotoapparat.view.toTextureView
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
-import java.util.concurrent.Executor
-import java.util.concurrent.RejectedExecutionException
 
 
 typealias PreviewSize = io.fotoapparat.parameter.Resolution
@@ -60,7 +51,6 @@ typealias PreviewSize = io.fotoapparat.parameter.Resolution
 internal open class CameraHardware(
         private val cameraManager: CameraManager,
         private val logger: Logger,
-        private val display: DeviceDisplay,
         val characteristics: Characteristics
 ) {
 
@@ -78,25 +68,14 @@ internal open class CameraHardware(
     private lateinit var surface: Surface
     private lateinit var cameraSession: CameraCaptureSession
 
-//    private var cachedCameraParameters: Camera.Parameters? = null
     private lateinit var displayOrientation: Orientation
     private lateinit var imageOrientation: Orientation
     private lateinit var previewOrientation: Orientation
-    private val componentScope = CoroutineScope(Dispatchers.Main)
 
     companion object {
         private val TAG = CameraHardware::class.java.simpleName
     }
 
-    private class HandlerExecutor(handler: Handler) : Executor {
-        private val mHandler = handler
-
-        override fun execute(command: Runnable) {
-            if (!mHandler.post(command)) {
-                throw RejectedExecutionException("" + mHandler + " is shutting down");
-            }
-        }
-    }
 
     /**
      * Opens a connection to a camera.
@@ -104,7 +83,6 @@ internal open class CameraHardware(
     @SuppressLint("MissingPermission")
     open fun open() {
         logger.recordMethod()
-        val lensPosition = characteristics.lensPosition
         val cameraId = characteristics.cameraId
         val cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraId)
 
@@ -131,7 +109,7 @@ internal open class CameraHardware(
                     }
                     val exc = RuntimeException("Camera $cameraId error: ($error) $msg")
                     Log.e(TAG, exc.message, exc)
-//                    if (cont.isActive) cont.resumeWithException(exc)
+                    cameraCompletable.completeExceptionally(exc)
                 }
 
             }, cameraHandler)
@@ -140,7 +118,7 @@ internal open class CameraHardware(
 
         waitForCamera()
         getCamCapabilities(cameraCharacteristics)
-        previewStream = PreviewStream(cameraDevice)
+        previewStream = PreviewStream()
 
         Log.d(TAG, "open: complete")
     }
@@ -171,33 +149,8 @@ internal open class CameraHardware(
      */
     open fun startPreview() {
         logger.recordMethod()
-        val w = getPreviewResolution().width.toFloat()
-        val h = getPreviewResolution().height.toFloat()
-        val rect = RectF(0F, 0F, w,h)
-        val cx = rect.centerX()
-        val cy = rect.centerY()
-        val rd = displayOrientation.degrees.toFloat() + 90F
-
-
         createCaptureSession()
         waitForSession()
-
-//        val captureRequest = camera.createCaptureRequest(
-//            CameraDevice.TEMPLATE_PREVIEW).apply {
-//                addTarget(surface)
-////                rotationMatrix(rd, cx, cy)
-//            }
-//        cameraSession.setRepeatingRequest(captureRequest.build(), null, cameraHandler)
-
-//        try {
-//            camera.startPreview()
-//        } catch (e: RuntimeException) {
-//            throw CameraException(
-//                    message = "Failed to start preview for camera with lens " +
-//                            "position: ${characteristics.lensPosition} and id: ${characteristics.cameraId}",
-//                    cause = e
-//            )
-//        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -211,45 +164,14 @@ internal open class CameraHardware(
         return cameraManager.getCameraCharacteristics(characteristics.cameraId)
     }
 
-    private fun setupSessionWithDynamicRangeProfile(
-        device: CameraDevice,
-        targets: List<Surface>,
-        handler: Handler,
-        stateCallback: CameraCaptureSession.StateCallback
-    ): Boolean {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            val outputConfigs = mutableListOf<OutputConfiguration>()
-            for (target in targets) {
-                val outputConfig = OutputConfiguration(target)
-//                outputConfig.setDynamicRangeProfile(args.dynamicRange)
-                outputConfigs.add(outputConfig)
-            }
-
-            val sessionConfig = SessionConfiguration(SessionConfiguration.SESSION_REGULAR,
-                outputConfigs, HandlerExecutor(handler), stateCallback)
-//            if (android.os.Build.VERSION.SDK_INT >=
-//                android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-//                && args.colorSpace != ColorSpaceProfiles.UNSPECIFIED) {
-//                sessionConfig.setColorSpace(ColorSpace.Named.values()[args.colorSpace])
-//            }
-            device.createCaptureSession(sessionConfig)
-            return true
-        } else {
-            device.createCaptureSession(targets, stateCallback, handler)
-            return false
-        }
-    }
-
-
-
-    /**
+   /**
      * Stops preview.
      */
     open fun stopPreview() {
         logger.recordMethod()
         cameraSession.stopRepeating()
-//        camera.stopPreview()
         cameraThread.quitSafely()
+        previewStream.stop()
     }
 
     /**
@@ -318,8 +240,7 @@ internal open class CameraHardware(
      */
     open fun updateFrameProcessor(frameProcessor: FrameProcessor?) {
         logger.recordMethod()
-
-        //previewStream.updateProcessorSafely(frameProcessor)
+        previewStream.updateProcessorSafely(frameProcessor)
     }
 
     /**
@@ -517,6 +438,20 @@ internal open class CameraHardware(
                     CameraDevice.TEMPLATE_PREVIEW
                 )
                 captureRequest?.addTarget(surface)
+                captureRequest?.addTarget(previewStream.getPreviewSurface())
+                captureRequest?.set(
+                    CaptureRequest.CONTROL_CAPTURE_INTENT,
+                    CaptureRequest.CONTROL_CAPTURE_INTENT_PREVIEW)
+                captureRequest?.set(
+                    CaptureRequest.CONTROL_CAPTURE_INTENT,
+                    CaptureRequest.CONTROL_CAPTURE_INTENT_PREVIEW)
+                captureRequest?.set(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+                captureRequest?.set(
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+
                 cameraCaptureSession.setRepeatingRequest(
                     captureRequest?.build()!!, null, cameraHandler
                 )
@@ -538,6 +473,7 @@ internal open class CameraHardware(
 
         if(cameraDevice == null || previewRender == null) return
 
+        previewStream.setPreviewResolution(getPreviewResolution())
 
         val transformedTexture = CameraUtils.buildTargetTextureFromOrientation(
             previewRender!!.toTextureView(),
@@ -546,7 +482,7 @@ internal open class CameraHardware(
             displayOrientation
         )
         this.surface = Surface(transformedTexture)
-        val targetList = listOf(surface)
+        val targetList = listOf(surface, previewStream.getPreviewSurface())
         this.cameraDevice?.createCaptureSession(targetList, sessionStateCallback, cameraHandler)
     }
 

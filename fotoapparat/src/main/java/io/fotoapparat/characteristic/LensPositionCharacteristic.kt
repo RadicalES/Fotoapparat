@@ -27,8 +27,8 @@ private const val CAMERA_FACING_EXTERNAL = 2
 
 internal fun Int.toLensPosition(): LensPosition =
     when (this) {
-        CameraCharacteristics.LENS_FACING_BACK -> LensPosition.Front
-        CameraCharacteristics.LENS_FACING_FRONT -> LensPosition.Back
+        CameraCharacteristics.LENS_FACING_BACK -> LensPosition.Back
+        CameraCharacteristics.LENS_FACING_FRONT -> LensPosition.Front
         CameraCharacteristics.LENS_FACING_EXTERNAL -> LensPosition.External
         else -> throw IllegalArgumentException("Lens position $this is not supported.")
     }

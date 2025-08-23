@@ -78,7 +78,4 @@ internal fun Device.start(orientationSensor: OrientationSensor) {
         startPreview()
     }
 
-    cameraRenderer.apply {
-//        setRotation(degrees = 90)
-    }
 }

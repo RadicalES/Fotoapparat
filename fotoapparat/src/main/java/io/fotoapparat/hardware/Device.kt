@@ -51,7 +51,6 @@ internal open class Device(
         CameraHardware(
             cameraManager,
             logger = logger,
-            display = deviceDisplay,
             characteristics = getCharacteristics(cameraManager, camItem.cameraId)
         )
     }
