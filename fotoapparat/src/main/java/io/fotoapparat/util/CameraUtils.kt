@@ -13,23 +13,90 @@ import kotlin.math.max
 
 object CameraUtils {
 
-    fun imageToByteBuffer(image: Image): ByteBuffer {
-        val planes = image.planes
-        val yBuffer = planes[0].buffer // Y plane
-        val uBuffer = planes[1].buffer // U plane
-        val vBuffer = planes[2].buffer // V plane
+    fun imageToByteArray(image: Image): ByteArray? {
+        image.let {
+            val nv21Buffer = yuv420ThreePlanesToNV21(
+                it.planes, image.width, image.height
+            )
 
-        val ySize = yBuffer.remaining()
-        val uSize = uBuffer.remaining()
-        val vSize = vBuffer.remaining()
+            return ByteArray(nv21Buffer.remaining()).apply {
+                nv21Buffer.get(this)
+            }
+        }
 
-        val nv21 = ByteArray(ySize + uSize + vSize)
+        return null
+    }
 
-        yBuffer.get(nv21, 0, ySize)
-        vBuffer.get(nv21, ySize, vSize) // Note: V plane often comes before U in NV21
-        uBuffer.get(nv21, ySize + vSize, uSize)
 
-        return ByteBuffer.wrap(nv21)
+    fun yuv420ThreePlanesToNV21(
+        yuv420888planes: Array<Image.Plane>,
+        width: Int,
+        height: Int
+    ): ByteBuffer {
+        val imageSize = width * height
+        val out = ByteArray(imageSize + 2 * (imageSize / 4))
+        if (areUVPlanesNV21(yuv420888planes, width, height)) {
+
+            yuv420888planes[0].buffer[out, 0, imageSize]
+            val uBuffer = yuv420888planes[1].buffer
+            val vBuffer = yuv420888planes[2].buffer
+            vBuffer[out, imageSize, 1]
+            uBuffer[out, imageSize + 1, 2 * imageSize / 4 - 1]
+        } else {
+            unpackPlane(yuv420888planes[0], width, height, out, 0, 1)
+            unpackPlane(yuv420888planes[1], width, height, out, imageSize + 1, 2)
+            unpackPlane(yuv420888planes[2], width, height, out, imageSize, 2)
+        }
+        return ByteBuffer.wrap(out)
+    }
+
+    private fun areUVPlanesNV21(planes: Array<Image.Plane>, width: Int, height: Int): Boolean {
+        val imageSize = width * height
+        val uBuffer = planes[1].buffer
+        val vBuffer = planes[2].buffer
+
+        val vBufferPosition = vBuffer.position()
+        val uBufferLimit = uBuffer.limit()
+
+        vBuffer.position(vBufferPosition + 1)
+        uBuffer.limit(uBufferLimit - 1)
+
+        val areNV21 =
+            vBuffer.remaining() == 2 * imageSize / 4 - 2 && vBuffer.compareTo(uBuffer) == 0
+
+        vBuffer.position(vBufferPosition)
+        uBuffer.limit(uBufferLimit)
+        return areNV21
+    }
+
+    private fun unpackPlane(
+        plane: Image.Plane,
+        width: Int,
+        height: Int,
+        out: ByteArray,
+        offset: Int,
+        pixelStride: Int
+    ) {
+        val buffer = plane.buffer
+        buffer.rewind()
+        val numRow = (buffer.limit() + plane.rowStride - 1) / plane.rowStride
+        if (numRow == 0) {
+            return
+        }
+        val scaleFactor = height / numRow
+        val numCol = width / scaleFactor
+
+        var outputPos = offset
+        var rowStart = 0
+        for (row in 0 until numRow) {
+            var inputPos = rowStart
+            for (col in 0 until numCol) {
+                out[outputPos] = buffer[inputPos]
+                outputPos += pixelStride
+                inputPos += plane.pixelStride
+            }
+            rowStart += plane.rowStride
+        }
     }
 
     /** Return the biggest preview size available which is smaller than the window */
