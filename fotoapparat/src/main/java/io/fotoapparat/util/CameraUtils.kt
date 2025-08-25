@@ -3,13 +3,34 @@ package io.fotoapparat.util
 import android.graphics.Matrix
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCharacteristics
+import android.media.Image
 import android.util.Size
 import android.view.TextureView
 import io.fotoapparat.hardware.orientation.Orientation
 import io.fotoapparat.hardware.orientation.toSurface
+import java.nio.ByteBuffer
 import kotlin.math.max
 
 object CameraUtils {
+
+    fun imageToByteBuffer(image: Image): ByteBuffer {
+        val planes = image.planes
+        val yBuffer = planes[0].buffer // Y plane
+        val uBuffer = planes[1].buffer // U plane
+        val vBuffer = planes[2].buffer // V plane
+
+        val ySize = yBuffer.remaining()
+        val uSize = uBuffer.remaining()
+        val vSize = vBuffer.remaining()
+
+        val nv21 = ByteArray(ySize + uSize + vSize)
+
+        yBuffer.get(nv21, 0, ySize)
+        vBuffer.get(nv21, ySize, vSize) // Note: V plane often comes before U in NV21
+        uBuffer.get(nv21, ySize + vSize, uSize)
+
+        return ByteBuffer.wrap(nv21)
+    }
 
     /** Return the biggest preview size available which is smaller than the window */
     private fun findBestPreviewSize(windowSize: Size, characteristics: CameraCharacteristics):

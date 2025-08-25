@@ -1,5 +1,7 @@
 package io.fotoapparat.preview
 
+import android.graphics.Bitmap
+import android.media.Image
 import io.fotoapparat.parameter.Resolution
 import java.util.*
 
@@ -7,15 +9,15 @@ import java.util.*
  * Frame of the preview stream.
  */
 data class Frame(
-        /**
+    /**
          * Resolution of the frame in pixels (before rotation).
          */
         val size: Resolution,
-        /**
+    /**
          * Image in NV21 format.
          */
         val image: ByteArray,
-        /**
+    /**
          * Clockwise rotation of the image in degrees relatively to user.
          */
         val rotation: Int
