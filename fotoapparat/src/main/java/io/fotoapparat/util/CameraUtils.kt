@@ -28,7 +28,7 @@ object CameraUtils {
     }
 
 
-    fun yuv420ThreePlanesToNV21(
+    private fun yuv420ThreePlanesToNV21(
         yuv420888planes: Array<Image.Plane>,
         width: Int,
         height: Int

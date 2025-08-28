@@ -6,6 +6,7 @@ import android.media.Image
 import android.media.ImageReader
 import android.os.Handler
 import android.os.HandlerThread
+import android.util.Log
 import android.view.Surface
 import io.fotoapparat.hardware.frameProcessingExecutor
 import io.fotoapparat.hardware.orientation.Orientation
@@ -87,16 +88,11 @@ internal class PreviewStream() {
         }
     }
 
-    private fun dispatchFrameOnBackgroundThread(image: Image) {
-        val data = CameraUtils.imageToByteArray(image)
-        postInferenceCallback = Runnable {
-//            image.close()
-            isProcessingFrame = false
-        }
+    private fun dispatchFrameOnBackgroundThread(data: ByteArray) {
 
         frameProcessingExecutor.execute {
             synchronized(frameProcessors) {
-                dispatchFrame(data!!)
+                dispatchFrame(data)
             }
             postInferenceCallback!!.run()
         }
@@ -144,10 +140,20 @@ internal class PreviewStream() {
         val image: Image? = reader?.acquireLatestImage()
 
         image?.use {
-
             if(!isProcessingFrame) {
                 isProcessingFrame = true
-                dispatchFrameOnBackgroundThread(it)
+
+                try {
+                    val data = CameraUtils.imageToByteArray(it)
+                    postInferenceCallback = Runnable {
+                        it.close()
+                        isProcessingFrame = false
+                    }
+
+                    dispatchFrameOnBackgroundThread(data!!)
+                } catch (_: IllegalStateException) {
+                }
+
             } else {
                 it.close()
             }
