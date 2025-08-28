@@ -25,6 +25,7 @@ class FotoapparatBuilder internal constructor(private var context: Context) {
             front(),
             external()
     )
+    internal var cameraId: String? = null
     internal var cameraErrorCallback: CameraErrorCallback = {}
     internal var renderer: CameraRenderer? = null
     internal var focusView: FocusView? = null
@@ -166,6 +167,9 @@ class FotoapparatBuilder internal constructor(private var context: Context) {
     fun into(renderer: CameraRenderer): FotoapparatBuilder =
             apply { this.renderer = renderer }
 
+    fun cameraId(id: String): FotoapparatBuilder =
+            apply { this.cameraId = id }
+
     /**
      * @param focusView view which will be used for touch to focus.
      * @see FocusView
@@ -196,7 +200,8 @@ class FotoapparatBuilder internal constructor(private var context: Context) {
                 cameraConfiguration = configuration,
                 scaleType = scaleType,
                 cameraErrorCallback = cameraErrorCallback,
-                logger = logger
+                logger = logger,
+                cameraId = cameraId
         )
     }
 

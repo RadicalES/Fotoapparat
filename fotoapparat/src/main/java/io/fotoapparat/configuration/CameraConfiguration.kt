@@ -1,5 +1,6 @@
 package io.fotoapparat.configuration
 
+import android.graphics.ImageFormat
 import io.fotoapparat.selector.*
 import io.fotoapparat.util.FrameProcessor
 import io.fotoapparat.preview.FrameProcessor as FrameProcessorJava
@@ -11,7 +12,11 @@ private const val DEFAULT_EXPOSURE_COMPENSATION = 0
  * A camera configuration which has all it's selectors defined.
  */
 data class CameraConfiguration(
-        override val flashMode: FlashSelector = off(),
+        override val imageFormat: ImageFormatSelector = firstAvailable(
+            yuv420_888(),
+            jpegFormat()
+        ),
+        override val flashMode: FlashSelector = on(),
         override val focusMode: FocusModeSelector = firstAvailable(
                 foff(),
                 continuousFocusPicture(),

@@ -4,6 +4,7 @@ import io.fotoapparat.selector.*
 import io.fotoapparat.util.FrameProcessor
 
 interface Configuration {
+    val imageFormat: ImageFormatSelector?
     val flashMode: FlashSelector?
     val focusMode: FocusModeSelector?
     val jpegQuality: QualitySelector?

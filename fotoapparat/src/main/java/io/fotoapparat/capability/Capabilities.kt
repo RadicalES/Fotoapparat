@@ -1,5 +1,6 @@
 package io.fotoapparat.capability
 
+import android.graphics.ImageFormat
 import io.fotoapparat.parameter.*
 import io.fotoapparat.util.lineSeparator
 import io.fotoapparat.util.wrap
@@ -22,7 +23,8 @@ data class Capabilities(
         val antiBandingModes: Set<AntiBandingMode>,
         val pictureResolutions: Set<Resolution>,
         val previewResolutions: Set<Resolution>,
-        val sensorSensitivities: Set<Int>
+        val sensorSensitivities: Set<Int>,
+        val imageFormats: Set<Int>
 ) {
 
     init {
@@ -48,12 +50,28 @@ data class Capabilities(
                 "previewFpsRanges:" + previewFpsRanges.wrap() +
                 "pictureResolutions:" + pictureResolutions.wrap() +
                 "previewResolutions:" + previewResolutions.wrap() +
-                "sensorSensitivities:" + sensorSensitivities.wrap()
+                "sensorSensitivities:" + sensorSensitivities.wrap() +
+                "imageFormats:" + imageFormats.toImageFormatString().wrap()
     }
 }
 
 private inline fun <reified E> Set<E>.ensureNotEmpty() {
     if (isEmpty()) {
         throw IllegalArgumentException("Capabilities cannot have an empty Set<${E::class.java.simpleName}>.")
+    }
+}
+
+fun Set<Int>.toImageFormatString(): Set<String> {
+    return map {
+        it.toImageFormatString()
+    }.toSet()
+}
+
+fun Int.toImageFormatString(): String {
+    return when(this) {
+        ImageFormat.JPEG -> "JPEG"
+        ImageFormat.PRIVATE -> "PRIVATE"
+        ImageFormat.YUV_420_888 -> "YUV-420-888"
+        else -> "NOT DEFINED"
     }
 }

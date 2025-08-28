@@ -1,5 +1,6 @@
 package io.fotoapparat.configuration
 
+import android.graphics.ImageFormat
 import io.fotoapparat.selector.*
 import io.fotoapparat.util.FrameProcessor
 
@@ -7,6 +8,7 @@ import io.fotoapparat.util.FrameProcessor
  * A camera update configuration.
  */
 data class UpdateConfiguration(
+        override val imageFormat: ImageFormatSelector? = null,
         override val flashMode: FlashSelector? = null,
         override val focusMode: FocusModeSelector? = null,
         override val jpegQuality: QualitySelector? = null,

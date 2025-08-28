@@ -75,7 +75,7 @@ internal open class OrientationSensor(
                 }
     }
     open var lastKnownOrientationState: OrientationState = OrientationState(
-            deviceOrientation = Portrait,
+            deviceOrientation = Orientation.Horizontal.Landscape,
             screenOrientation = device.getScreenOrientation()
     )
 

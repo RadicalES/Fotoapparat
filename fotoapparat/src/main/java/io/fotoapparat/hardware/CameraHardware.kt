@@ -41,6 +41,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
+import kotlin.math.log
 
 
 typealias PreviewSize = io.fotoapparat.parameter.Resolution
@@ -94,8 +95,9 @@ internal open class CameraHardware(
                     cameraCompletable.complete(device)
                 }
 
-                override fun onDisconnected(p0: CameraDevice) {
+                override fun onDisconnected(device: CameraDevice) {
                     Log.w(TAG, "Camera $cameraId has been disconnected")
+                    cameraCompletable.completeExceptionally(RuntimeException("Camera $cameraId has been disconnected"))
                 }
 
                 override fun onError(device: CameraDevice, error: Int) {
@@ -130,8 +132,15 @@ internal open class CameraHardware(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun waitForCamera() = runBlocking {
         cameraCompletable.await()
-        cameraDevice = cameraCompletable.getCompleted()
-        Log.d(TAG, "waitForCamera: complete")
+        val exc = cameraCompletable.getCompletionExceptionOrNull()
+        if (exc != null) {
+            throw exc
+        } else {
+            cameraDevice = cameraCompletable.getCompleted()
+            getCamCapabilities(getCameraCharacteristics())
+            Log.d(TAG, "waitForCamera: cap = " + getCapabilities().toString())
+            Log.d(TAG, "waitForCamera: complete OK")
+        }
     }
 
 
@@ -352,6 +361,7 @@ internal open class CameraHardware(
         val previewResolution = this.getPreviewResolution(previewOrientation)
 
         logger.log("Preview resolution is: $previewResolution")
+        Log.d(TAG, "getPreviewResolution: $previewResolution")
 
         return previewResolution
     }
@@ -517,11 +527,12 @@ private const val AUTOFOCUS_TIMEOUT_SECONDS = 3L
 
 private fun CameraHardware.getPreviewResolution(previewOrientation: Orientation): Resolution {
 
+
     val cfgMap: StreamConfigurationMap? = getCameraCharacteristics().get(SCALER_STREAM_CONFIGURATION_MAP)
 
     return cfgMap.run {
         val sizes = cfgMap?.getOutputSizes(SurfaceTexture::class.java)
-        sizes!![0].toResolution()
+        sizes!![5].toResolution()
     }
 
 //    return parameters.previewSize

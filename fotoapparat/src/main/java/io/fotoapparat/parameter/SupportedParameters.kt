@@ -2,14 +2,18 @@
 
 package io.fotoapparat.parameter
 
+import android.graphics.ImageFormat
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraMetadata.*
 import android.util.Range
 import android.util.Size
+import io.fotoapparat.selector.firstAvailable
+import io.fotoapparat.selector.yuv420_888
 
 
 typealias RangeArray = Array<Range<Int>>
 typealias RangeInt = Range<Int>
+typealias ArraySize = Array<Size>
 
 /**
  * Provides the supported [Camera.Parameters] with defaults where needed.
@@ -38,12 +42,22 @@ internal class SupportedParameters(
         res
     }
 
+    val imageFormats: List<Int> by lazy {
+        cameraCharacteristics
+            .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
+            .outputFormats
+            .toImageFormatList()
+    }
+
     /**
      * @see Camera.Parameters.getSupportedPreviewSizes
      */
     val previewResolutions: List<Size> by lazy {
-//        cameraParameters.supportedPreviewSizes
-        listOf(Size(1024,1024), Size(1280, 720))
+        cameraCharacteristics
+            .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
+            .getOutputSizes(ImageFormat.YUV_420_888)
+            .toSizeList()
+
     }
 
     /**
@@ -167,6 +181,14 @@ private fun IntArray.toAutoFocusModes() : List<String> {
 }
 
 private fun IntArray.toAntiBandingModes(): List<Int> {
+    return this.toList()
+}
+
+private fun IntArray.toImageFormatList(): List<Int> {
+    return this.toList()
+}
+
+private fun ArraySize.toSizeList(): List<Size> {
     return this.toList()
 }
 

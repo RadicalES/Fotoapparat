@@ -44,6 +44,7 @@ class Fotoapparat
                 front(),
                 external()
         ),
+        cameraId: String? = null,
         scaleType: ScaleType = ScaleType.CenterCrop,
         cameraConfiguration: CameraConfiguration = CameraConfiguration.default(),
         cameraErrorCallback: CameraErrorCallback = {},
@@ -64,6 +65,7 @@ class Fotoapparat
             logger = logger,
             deviceDisplay = deviceDisplay,
             scaleType = scaleType,
+            cameraId = cameraId,
             initialLensPositionSelector = lensPosition,
             initialConfiguration = cameraConfiguration,
             executor = executor
@@ -240,8 +242,9 @@ class Fotoapparat
      * @return `true` if selected lens position is available. `false` if it is not available.
      */
     fun isAvailable(
-            selector: LensPositionSelector
-    ): Boolean = device.canSelectCamera(selector)
+            selector: LensPositionSelector,
+            cameraId: String?
+    ): Boolean = device.canSelectCamera(selector, cameraId)
 
     companion object {
 

@@ -90,7 +90,7 @@ internal class PreviewStream() {
     private fun dispatchFrameOnBackgroundThread(image: Image) {
         val data = CameraUtils.imageToByteArray(image)
         postInferenceCallback = Runnable {
-            image.close()
+//            image.close()
             isProcessingFrame = false
         }
 
@@ -131,7 +131,7 @@ internal class PreviewStream() {
         }
 
         imageReader = ImageReader.newInstance( resolution.width, resolution.height,
-            ImageFormat.YUV_420_888, 1)
+            ImageFormat.YUV_420_888, 2)
         imageReader?.setOnImageAvailableListener(onImageAvailableCallback, imageReaderHandler)
 
     }

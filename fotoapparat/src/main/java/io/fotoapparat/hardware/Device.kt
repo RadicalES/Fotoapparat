@@ -35,7 +35,9 @@ internal open class Device(
     internal open val cameraRenderer: CameraRenderer,
     internal val focusPointSelector: FocalPointSelector?,
     internal val executor: CameraExecutor,
-    initialConfiguration: CameraConfiguration, initialLensPositionSelector: LensPositionSelector
+    cameraId: String?,
+    initialConfiguration: CameraConfiguration,
+    initialLensPositionSelector: LensPositionSelector
 ) {
 
     /** Detects, characterizes, and connects to a CameraDevice (used for all camera operations) */
@@ -55,6 +57,7 @@ internal open class Device(
         )
     }
 
+    private var cameraId: String? = cameraId
     private var lensPositionSelector: LensPositionSelector = initialLensPositionSelector
     private var selectedCameraHardware = CompletableDeferred<CameraHardware>()
     private var savedConfiguration = CameraConfiguration.default()
@@ -67,10 +70,11 @@ internal open class Device(
     /**
      * Selects a camera.
      */
-    open fun canSelectCamera(lensPositionSelector: LensPositionSelector): Boolean {
+    open fun canSelectCamera(lensPositionSelector: LensPositionSelector, cameraId: String?): Boolean {
         val selectedCameraDevice = selectCamera(
                 availableCameras = cameras,
-                lensPositionSelector = lensPositionSelector
+                lensPositionSelector = lensPositionSelector,
+                cameraId = cameraId
         )
         return selectedCameraDevice != null
     }
@@ -83,7 +87,8 @@ internal open class Device(
 
         selectCamera(
                 availableCameras = cameras,
-                lensPositionSelector = lensPositionSelector
+                lensPositionSelector = lensPositionSelector,
+                cameraId = cameraId
         )
                 ?.let(selectedCameraHardware::complete)
                 ?: selectedCameraHardware.completeExceptionally(UnsupportedLensException())
@@ -204,13 +209,21 @@ internal fun updateConfiguration(
  */
 internal fun selectCamera(
     availableCameras: List<CameraHardware>,
-    lensPositionSelector: LensPositionSelector
+    lensPositionSelector: LensPositionSelector,
+    cameraId: String?
 ): CameraHardware? {
 
     val lensPositions = availableCameras.map { it.characteristics.lensPosition }.toSet()
     val desiredPosition = lensPositionSelector(lensPositions)
+    val cameras = availableCameras.filter { it.characteristics.lensPosition == desiredPosition }
 
-    return availableCameras.find { it.characteristics.lensPosition == desiredPosition }
+    // if we have an ID, filter for that
+    if(!cameraId.isNullOrEmpty()) {
+        return cameras.find { it.characteristics.cameraId == cameraId }
+    }
+
+    // simply return the first match
+    return cameras[0]
 }
 
 internal fun getCameraList(cameraManager: CameraManager): List<CameraItem> {
