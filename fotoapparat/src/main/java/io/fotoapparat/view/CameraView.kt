@@ -1,18 +1,13 @@
 package io.fotoapparat.view
 
 import android.content.Context
-import android.graphics.Matrix
 import android.graphics.Rect
-import android.graphics.RectF
 import android.graphics.SurfaceTexture
 import android.util.AttributeSet
-import android.view.Surface
 import android.view.TextureView
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import io.fotoapparat.characteristic.LensPosition
 import io.fotoapparat.exception.camera.UnavailableSurfaceException
-import io.fotoapparat.hardware.orientation.toSurface
 import io.fotoapparat.parameter.Resolution
 import io.fotoapparat.parameter.ScaleType
 import java.util.concurrent.CountDownLatch
@@ -42,7 +37,6 @@ class CameraView
         super.onDetachedFromWindow()
         textureLatch.countDown()
     }
-
 
 
     override fun setScaleType(scaleType: ScaleType) {
@@ -94,65 +88,71 @@ private fun ViewGroup.layoutTextureView(
 }
 
 private fun Resolution.centerInside(view: ViewGroup) {
+    val vw = view.measuredWidth
+    val vh = view.measuredHeight
     val scale = Math.min(
-            view.measuredWidth / width.toFloat(),
-            view.measuredHeight / height.toFloat()
+            vw / width.toFloat(),
+            vh / height.toFloat()
     )
 
-    val width = (width * scale).toInt()
-    val height = (height * scale).toInt()
+    val w = (width * scale).toInt()
+    val h = (height * scale).toInt()
 
-    val extraX = Math.max(0, view.measuredWidth - width)
-    val extraY = Math.max(0, view.measuredHeight - height)
+    val extraX = Math.max(0, vw - w)
+    val extraY = Math.max(0, vh - h)
 
     val rect = Rect(
             extraX / 2,
             extraY / 2,
-            width + extraX / 2,
-            height + extraY / 2
+            w + extraX / 2,
+            h + extraY / 2
     )
 
     view.layoutChildrenAt(rect)
 }
 
 private fun Resolution.centerCrop(view: ViewGroup) {
+    val vw = view.measuredWidth
+    val vh = view.measuredHeight
     val scale = Math.max(
-            view.measuredWidth / width.toFloat(),
-            view.measuredHeight / height.toFloat()
+        vw / width.toFloat(),
+        vh / height.toFloat()
     )
 
-    val width = (width * scale).toInt()
-    val height = (height * scale).toInt()
+    val w = (width * scale).toInt()
+    val h = (height * scale).toInt()
 
-    val extraX = Math.max(0, width - view.measuredWidth)
-    val extraY = Math.max(0, height - view.measuredHeight)
+    val extraX = Math.max(0, w - vw)
+    val extraY = Math.max(0, h - vh)
 
     val rect = Rect(
             -extraX / 2,
             -extraY / 2,
-            width - extraX / 2,
-            height - extraY / 2
+            w + extraX / 2,
+            h + extraY / 2
     )
 
     view.layoutChildrenAt(rect)
 }
 
 private fun Resolution.topCrop(view: ViewGroup) {
+    val vw = view.measuredWidth
+    val vh = view.measuredHeight
     val scale = Math.max(
-            view.measuredWidth / width.toFloat(),
-            view.measuredHeight / height.toFloat()
+            vw / width.toFloat(),
+            vh / height.toFloat()
     )
 
-    val width = (width * scale).toInt()
-    val height = (height * scale).toInt()
+    val w = (width * scale).toInt()
+    val h = (height * scale).toInt()
 
-    val extraX = Math.max(0, width - view.measuredWidth)
+    val extraX = Math.max(0, w - vw)
 
     val rect = Rect(
             -extraX / 2,
             0,
-            width - extraX / 2,
-            height
+            w + extraX / 2,
+            h
     )
 
     view.layoutChildrenAt(rect)

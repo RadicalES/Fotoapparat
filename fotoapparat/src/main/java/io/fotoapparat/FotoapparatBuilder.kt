@@ -29,7 +29,7 @@ class FotoapparatBuilder internal constructor(private var context: Context) {
     internal var cameraErrorCallback: CameraErrorCallback = {}
     internal var renderer: CameraRenderer? = null
     internal var focusView: FocusView? = null
-    internal var scaleType: ScaleType = ScaleType.CenterCrop
+    internal var scaleType: ScaleType = ScaleType.CenterInside
     internal var logger: Logger = none()
 
     internal var configuration = CameraConfiguration.default()

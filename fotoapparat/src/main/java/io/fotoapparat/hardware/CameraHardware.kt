@@ -532,7 +532,11 @@ private fun CameraHardware.getPreviewResolution(previewOrientation: Orientation)
 
     return cfgMap.run {
         val sizes = cfgMap?.getOutputSizes(SurfaceTexture::class.java)
-        sizes!![5].toResolution()
+        val res = sizes!![5].toResolution()
+        when(previewOrientation) {
+            is Orientation.Vertical -> res
+            is Orientation.Horizontal -> res.flipDimensions()
+        }
     }
 
 //    return parameters.previewSize
