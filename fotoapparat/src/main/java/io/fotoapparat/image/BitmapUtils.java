@@ -115,7 +115,7 @@ public final class BitmapUtils {
             ByteBuffer nv21Buffer =
                     BitmapUtils.yuv420ThreePlanesToNV21(
                             image.getPlanes(), image.getWidth(), image.getHeight());
-            return BitmapUtils.getBitmap(nv21Buffer, image.getWidth(), image.getHeight(), rotation);
+            return BitmapUtils.nv21BufferToBitmap(nv21Buffer, image.getWidth(), image.getHeight(), rotation);
         } else if (image.getFormat() == ImageFormat.JPEG) {
             return BitmapUtils.rotateBitmap(
                     getJpegBitmap(image), rotation, false, false);
@@ -131,7 +131,7 @@ public final class BitmapUtils {
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
     }
 
-    public static Bitmap getBitmap(ByteBuffer data, int width, int height, int rotation) {
+    public static Bitmap nv21BufferToBitmap(ByteBuffer data, int width, int height, int rotation) {
         data.rewind();
         byte[] imageInBuffer = new byte[data.limit()];
         data.get(imageInBuffer, 0, imageInBuffer.length);
@@ -139,6 +139,30 @@ public final class BitmapUtils {
             YuvImage image =
                     new YuvImage(
                             imageInBuffer,
+                            ImageFormat.NV21,
+                            width,
+                            height,
+                            null);
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            image.compressToJpeg(
+                    new Rect(0, 0, width, height), 80, stream);
+
+            Bitmap bmp = BitmapFactory.decodeByteArray(stream.toByteArray(), 0, stream.size());
+
+            stream.close();
+            return rotateBitmap(bmp, rotation, false, false);
+        } catch (Exception e) {
+            Log.e("VisionProcessorBase", "Error: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public static Bitmap nv21BufferToBitmap(byte[] data, int width, int height, int rotation) {
+
+        try {
+            YuvImage image =
+                    new YuvImage(
+                            data,
                             ImageFormat.NV21,
                             width,
                             height,

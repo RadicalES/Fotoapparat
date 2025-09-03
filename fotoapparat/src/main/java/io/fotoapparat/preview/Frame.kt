@@ -9,15 +9,12 @@ import java.util.*
  * Frame of the preview stream.
  */
 data class Frame(
-    /**
-         * Resolution of the frame in pixels (before rotation).
-         */
-        val size: Resolution,
+
     /**
          * Image in NV21 format.
          */
-//        val image: ByteArray,
-        val image: Bitmap,
+        val image: ByteArray,
+//        val image: Bitmap,
     /**
          * Clockwise rotation of the image in degrees relatively to user.
          */
@@ -30,6 +27,7 @@ data class Frame(
 ) {
 
     override fun toString(): String {
+        val size = Resolution(width, height)
         return "Frame{" +
                 "size=" + size +
                 ", image= array(" + image + ")" +
@@ -43,7 +41,10 @@ data class Frame(
 
         other as Frame
 
-        if (size != other.size) return false
+        val size = Resolution(width, height)
+        val sizeother = Resolution(other.width, other.height)
+
+        if (size != sizeother) return false
 //        if (!Arrays.equals(image, other.image)) return false
         if (rotation != other.rotation) return false
 
@@ -51,6 +52,7 @@ data class Frame(
     }
 
     override fun hashCode(): Int {
+        val size = Resolution(width, height)
         var result = size.hashCode()
 //        result = 31 * result + Arrays.hashCode(image)
         result = 31 * result + rotation

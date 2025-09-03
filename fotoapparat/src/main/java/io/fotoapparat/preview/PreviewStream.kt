@@ -23,20 +23,12 @@ import java.util.*
  */
 internal class PreviewStream() {
 
-    private val frameProcessors = LinkedHashSet<FrameProcessor>()
-
-    private var imageResolution: Resolution? = null
-
-    private var imageReader: ImageReader? = null
-
-    private var isProcessingFrame = false
-
     private var processMutex = Mutex()
-
+    private val frameProcessors = LinkedHashSet<FrameProcessor>()
+    private var imageResolution: Resolution? = null
+    private var imageReader: ImageReader? = null
     private val imageReaderThread = HandlerThread("imageReaderThread").apply { start() }
-
     private val imageReaderHandler = Handler(imageReaderThread.looper)
-
     private var postInferenceCallback: Runnable? = null
 
     /**
@@ -93,37 +85,30 @@ internal class PreviewStream() {
         }
     }
 
-    private fun dispatchFrameOnBackgroundThread(data: Bitmap, width: Int, height: Int, rotation: Int) {
+    private fun dispatchFrameOnBackgroundThread( data: ByteArray,
+                                                 width: Int,
+                                                 height: Int,
+                                                 rotation: Int) {
+        val frame = Frame(
+            image = data,
+            rotation = rotation,
+            width = width,
+            height = height
+        )
 
         frameProcessingExecutor.execute {
             synchronized(frameProcessors) {
-                dispatchFrame(data, width, height, rotation)
+                dispatchFrame(frame)
             }
             postInferenceCallback!!.run()
         }
     }
 
-    private fun dispatchFrame(image: Bitmap, width: Int, height: Int, rotation: Int) {
-        val prevRes = ensurePreviewSizeAvailable()
-
-        val frame = Frame(
-                size = prevRes,
-                image = image,
-                rotation = rotation,
-                width = width,
-                height = height
-        )
-
+    private fun dispatchFrame(frame: Frame) {
         frameProcessors.forEach {
             it.invoke(frame)
         }
-
     }
-
-    private fun ensurePreviewSizeAvailable(): Resolution =
-        imageResolution
-                    ?: throw IllegalStateException("previewSize is null. Frame was not added?")
-
 
     @SuppressLint("Range")
     fun setImageResolution(resolution: Resolution) {
@@ -145,33 +130,23 @@ internal class PreviewStream() {
         val image: Image? = reader?.acquireLatestImage()
 
         image?.use {
-//            if(!isProcessingFrame) {
               if(processMutex.tryLock()) {
-                  isProcessingFrame = true
-
-                  Log.d(TAG, ": image w = ${it.width}, h = ${it.height}")
 
                   try {
-//                        val data = CameraUtils.imageToByteArray(it)
-//                       val data = BitmapUtils.yuv420ThreePlanesToNV21(it.planes, it.width, it.height)
-//                       val bdata = ByteArray(data.remaining()).apply {
-//                            data.get(this)
-//                        }
-                      frameOrientation = Orientation.Vertical.Portrait
-
-//                      val data = CameraUtils.imageToByteArray(it)
-//                      val data: Bitmap = BitmapUtils.imageToBitmap(image, -90)
                       val data = CameraUtils.yuv420ThreePlanesToNV21(it.planes, it.width, it.height)
-                      val bitmap = BitmapUtils.getBitmap(data, it.width, it.height, -90)
-
+                      val buffer = ByteArray(data.remaining()).apply {
+                          data.get(this)
+                      }
 
                         postInferenceCallback = Runnable {
                             it.close()
-                            isProcessingFrame = false
                             processMutex.unlock()
                         }
 
-                        dispatchFrameOnBackgroundThread(bitmap!!, it.width, it.height, frameOrientation.degrees)
+                        dispatchFrameOnBackgroundThread( buffer,
+                            it.width, it.height,
+                            frameOrientation.degrees)
+
                   } catch (_: IllegalStateException) { }
 
             } else {
