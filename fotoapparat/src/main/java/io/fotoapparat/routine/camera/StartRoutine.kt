@@ -50,7 +50,7 @@ internal fun Device.start(orientationSensor: OrientationSensor) {
         setDisplayOrientation(orientationSensor.lastKnownOrientationState)
     }
 
-    val previewResolution = cameraDeviceHW.getPreviewResolution()
+    val streamResolution = cameraDeviceHW.getStreamResolution()
 
     cameraRenderer.apply {
         setScaleType(
@@ -58,7 +58,7 @@ internal fun Device.start(orientationSensor: OrientationSensor) {
         )
 
         setPreviewResolution(
-                resolution = previewResolution
+                resolution = streamResolution
         )
 
     }

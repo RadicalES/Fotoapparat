@@ -9,16 +9,19 @@ package io.fotoapparat.hardware.orientation
  * @return rotation of the image relatively to current device orientation.
  */
 fun computePreviewOrientation(
-        screenOrientation: Orientation,
+        displayOrientation: Orientation,
         cameraOrientation: Orientation,
         cameraIsMirrored: Boolean
 ): Orientation {
-    val mirroredCameraModifier = if (cameraIsMirrored) -1 else 1
+    val sign = if (cameraIsMirrored) 1 else -1
 
-    val rotation = (720
-            + mirroredCameraModifier * screenOrientation.degrees
-            - cameraOrientation.degrees
-            ) % 360
+//    val rotation = (720
+//            + mirroredCameraModifier * screenOrientation.degrees
+//            - cameraOrientation.degrees
+//            ) % 360
+
+    // rotation = (sensorOrientationDegrees - deviceOrientationDegrees * sign + 360) % 360
+    val rotation = (cameraOrientation.degrees - displayOrientation.degrees * sign + 360) % 360
 
     return rotation.toOrientation()
 }

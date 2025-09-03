@@ -45,7 +45,7 @@ class Fotoapparat
                 external()
         ),
         cameraId: String? = null,
-        scaleType: ScaleType = ScaleType.CenterCrop,
+        val scaleType: ScaleType = ScaleType.CenterInside,
         cameraConfiguration: CameraConfiguration = CameraConfiguration.default(),
         cameraErrorCallback: CameraErrorCallback = {},
         private val executor: CameraExecutor = EXECUTOR,

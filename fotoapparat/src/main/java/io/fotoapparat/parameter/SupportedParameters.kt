@@ -64,7 +64,10 @@ internal class SupportedParameters(
      * @see Camera.Parameters.getSupportedPictureSizes
      */
     val pictureResolutions: List<Size> by lazy {
-        listOf(Size(1024,1024), Size(1280, 720))
+        cameraCharacteristics
+            .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
+            .getOutputSizes(ImageFormat.YUV_420_888)
+            .toSizeList()
     }
 
     /**

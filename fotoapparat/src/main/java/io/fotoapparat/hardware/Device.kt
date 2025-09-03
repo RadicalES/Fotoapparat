@@ -2,6 +2,10 @@
 
 package io.fotoapparat.hardware
 
+/* CAMERA2 PREVIEW
+ * https://developer.android.com/media/camera/camera2/camera-preview
+ * */
+
 import android.content.Context
 import android.graphics.ImageFormat
 import android.hardware.camera2.CameraCharacteristics
@@ -14,6 +18,11 @@ import io.fotoapparat.configuration.Configuration
 import io.fotoapparat.exception.camera.UnsupportedLensException
 import io.fotoapparat.hardware.display.DeviceDisplay
 import io.fotoapparat.hardware.orientation.Orientation
+import io.fotoapparat.hardware.orientation.fromSurfaceToDegrees
+import io.fotoapparat.hardware.orientation.toCCWOrientation
+import io.fotoapparat.hardware.orientation.toClosestRightAngle
+import io.fotoapparat.hardware.orientation.toOrientation
+import io.fotoapparat.hardware.orientation.toSurface
 import io.fotoapparat.log.Logger
 import io.fotoapparat.parameter.ScaleType
 import io.fotoapparat.parameter.camera.CameraParameters
@@ -124,13 +133,21 @@ internal open class Device(
     open fun hasSelectedCamera() = selectedCameraHardware.isCompleted
 
     /**
-     * @return Orientation of the screen.
+     * @return Orientation of the display
+     * provides the counterclockwise rotation of the device (from the user's point of view).
      */
-    open fun getScreenOrientation(): Orientation {
-        return deviceDisplay.getOrientation()
+    open fun getDisplayOrientation(): Orientation {
+        return deviceDisplay.getRotation()
+            .fromSurfaceToDegrees()
+            .toCCWOrientation()
     }
 
-    open fun getScreenRotation(): Int {
+    /**
+     * @return Rotation of the display
+     * provides the counterclockwise rotation of the device (from the user's point of view).
+     * values: ROTATION_0, ROTATION_90, ROTATION_180, ROTATION_270
+     */
+    open fun getDisplayRotation(): Int {
         return deviceDisplay.getRotation()
     }
 

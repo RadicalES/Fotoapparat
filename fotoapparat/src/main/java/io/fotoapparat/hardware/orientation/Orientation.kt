@@ -3,7 +3,7 @@ package io.fotoapparat.hardware.orientation
 import android.view.Surface
 
 typealias DeviceOrientation = Orientation
-typealias ScreenOrientation = Orientation
+typealias DisplayOrientation = Orientation
 
 /**
  * The device orientation.
@@ -74,6 +74,17 @@ internal fun Int.toOrientation(): Orientation {
     }
 }
 
+/* device display is reported CCW */
+internal fun Int.toCCWOrientation(): Orientation {
+    return when (this) {
+        0, 360 -> Orientation.Vertical.Portrait
+        90 -> Orientation.Horizontal.Landscape
+        180 -> Orientation.Vertical.ReversePortrait
+        270 -> Orientation.Horizontal.ReverseLandscape
+        else -> throw IllegalArgumentException("Cannot convert $this to absolute Orientation.")
+    }
+}
+
 fun Int.toSurface(): Int {
     return when (this) {
         0, 360 -> Surface.ROTATION_0
@@ -81,5 +92,15 @@ fun Int.toSurface(): Int {
         180 -> Surface.ROTATION_180
         270 -> Surface.ROTATION_270
         else -> throw IllegalArgumentException("Cannot convert $this to absolute Orientation.")
+    }
+}
+
+fun Int.fromSurfaceToDegrees(): Int {
+    return when (this) {
+        Surface.ROTATION_0 -> 0
+        Surface.ROTATION_90 -> 90
+        Surface.ROTATION_180 -> 180
+        Surface.ROTATION_270 -> 270
+        else -> throw IllegalArgumentException("Cannot convert $this to degrees, surface rotation invalid")
     }
 }

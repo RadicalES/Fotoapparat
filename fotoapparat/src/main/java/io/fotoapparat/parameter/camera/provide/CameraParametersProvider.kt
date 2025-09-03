@@ -42,6 +42,22 @@ internal fun getCameraParameters(
     }
 }
 
+private fun selectNearestResolution(
+    resolution: Resolution,
+    original: ResolutionSelector
+) = firstAvailable(
+    filtered(
+        selector = aspectRatio(
+            aspectRatio = resolution.aspectRatio,
+            selector = original,
+            tolerance = 0.2
+        ),
+        predicate = {
+            it.area <= resolution.area
+        }
+    )
+)
+
 private fun validPreviewSizeSelector(
         resolution: Resolution,
         original: ResolutionSelector
@@ -49,7 +65,8 @@ private fun validPreviewSizeSelector(
         filtered(
                 selector = aspectRatio(
                         aspectRatio = resolution.aspectRatio,
-                        selector = original
+                        selector = original,
+                        tolerance = 0.2
                 ),
                 predicate = {
                     it.area <= resolution.area

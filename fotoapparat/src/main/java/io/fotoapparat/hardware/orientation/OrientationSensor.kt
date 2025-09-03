@@ -1,6 +1,7 @@
 package io.fotoapparat.hardware.orientation
 
 import android.content.Context
+import android.util.Log
 import io.fotoapparat.hardware.Device
 import io.fotoapparat.hardware.orientation.Orientation.Vertical.Portrait
 
@@ -56,27 +57,42 @@ internal open class OrientationSensor(
         private val device: Device
 ) {
 
+    companion object {
+        val TAG = "OrientationSensor"
+    }
+
     private lateinit var listener: (OrientationState) -> Unit
+
+    /*
+    * onOrientationChanged is the clockwise rotation of the device
+    * */
     private val onOrientationChanged: (DeviceRotationDegrees) -> Unit = { deviceRotation ->
         deviceRotation.toClosestRightAngle()
                 .toOrientation()
                 .let { deviceOrientation ->
-                    val screenOrientation = device.getScreenOrientation()
+
+                    // display orientation
+                    val displayOrientation = device.getDisplayOrientation()
 
                     val newState = OrientationState(
-                            deviceOrientation = deviceOrientation,
-                            screenOrientation = screenOrientation
+                        deviceOrientation = deviceOrientation,
+                        displayOrientation = displayOrientation
                     )
 
                     if (newState != lastKnownOrientationState) {
                         lastKnownOrientationState = newState
                         listener(newState)
+                        Log.d(TAG, "orientation changed: " +
+                                "rotation = $deviceRotation, " +
+                                "device = $deviceOrientation, " +
+                                "display = $displayOrientation")
                     }
                 }
     }
+
     open var lastKnownOrientationState: OrientationState = OrientationState(
-            deviceOrientation = Orientation.Horizontal.Landscape,
-            screenOrientation = device.getScreenOrientation()
+        deviceOrientation = Orientation.Horizontal.Landscape,
+        displayOrientation = device.getDisplayOrientation()
     )
 
     constructor(

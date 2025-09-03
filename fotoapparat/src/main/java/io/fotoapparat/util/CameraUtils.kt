@@ -1,6 +1,7 @@
 package io.fotoapparat.util
 
 import android.graphics.Matrix
+import android.graphics.Rect
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCharacteristics
 import android.media.Image
@@ -8,6 +9,8 @@ import android.util.Size
 import android.view.TextureView
 import io.fotoapparat.hardware.orientation.Orientation
 import io.fotoapparat.hardware.orientation.toSurface
+import io.fotoapparat.parameter.Resolution
+import io.fotoapparat.parameter.ScaleType
 import java.nio.ByteBuffer
 import kotlin.math.max
 
@@ -28,7 +31,7 @@ object CameraUtils {
     }
 
 
-    private fun yuv420ThreePlanesToNV21(
+    fun yuv420ThreePlanesToNV21(
         yuv420888planes: Array<Image.Plane>,
         width: Int,
         height: Int
@@ -124,7 +127,6 @@ object CameraUtils {
         val previewSize = findBestPreviewSize(windowSize, characteristics)
         val sensorOrientation = cameraOrientation.toSurface()
         val isRotationRequired = cameraOrientation.toSurface() != deviceOrientation.toSurface()
-
 
         /* Scale factor required to scale the preview to its original size on the x-axis */
         var scaleX = 1f
@@ -292,7 +294,7 @@ object CameraUtils {
         deviceOrientationDegrees: Int
     ): Int {
         val sensorOrientationDegrees = 0
-            characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: 0
+        characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: 0
 
         // Reverse device orientation for front-facing cameras
         val sign = if (characteristics.get(CameraCharacteristics.LENS_FACING) ==
@@ -309,3 +311,69 @@ internal object SizeComparator : Comparator<Size> {
         return b.height * b.width - a.width * a.height
     }
 }
+
+fun Resolution.projectCenterInside(viewWidth: Int, viewHeight: Int): Rect {
+    val scale = Math.min(
+        viewWidth / width.toFloat(),
+        viewHeight / height.toFloat()
+    )
+
+    val w = (width * scale).toInt()
+    val h = (height * scale).toInt()
+    val extraX = Math.max(0, viewWidth - w)
+    val extraY = Math.max(0, viewHeight - h)
+
+    return  Rect(
+        extraX / 2,
+        extraY / 2,
+        w + extraX / 2,
+        h + extraY / 2
+    )
+}
+
+fun Resolution.projectCenterCrop(viewWidth: Int, viewHeight: Int): Rect {
+    val scale = Math.max(
+        viewWidth / width.toFloat(),
+        viewHeight / height.toFloat()
+    )
+
+    val w = (width * scale).toInt()
+    val h = (height * scale).toInt()
+    val extraX = Math.max(0, w - viewWidth)
+    val extraY = Math.max(0, h - viewHeight)
+
+    return Rect(
+        -extraX / 2,
+        -extraY / 2,
+        w + extraX / 2,
+        h + extraY / 2
+    )
+}
+
+fun Resolution.projectTopCrop(viewWidth: Int, viewHeight: Int): Rect {
+    val scale = Math.max(
+        viewWidth / width.toFloat(),
+        viewHeight / height.toFloat()
+    )
+
+    val w = (width * scale).toInt()
+    val h = (height * scale).toInt()
+    val extraX = Math.max(0, w - viewWidth)
+
+    return Rect(
+        -extraX / 2,
+        0,
+        w + extraX / 2,
+        h
+    )
+}
+
+fun projectImage(scaleType: ScaleType, viewWidth: Int, viewHeight: Int, imageWidth: Int, imageHeight: Int): Rect {
+    val res = Resolution(imageWidth, imageHeight)
+    return when (scaleType) {
+        ScaleType.CenterInside -> res.projectCenterInside(viewWidth, viewHeight)
+        ScaleType.CenterCrop -> res.projectCenterCrop(viewWidth, viewHeight)
+        ScaleType.TopCrop -> res.projectTopCrop(viewWidth, viewHeight)
+    }
+}
+

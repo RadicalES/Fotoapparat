@@ -3,6 +3,7 @@ package io.fotoapparat.routine.photo
 import io.fotoapparat.exception.camera.CameraException
 import io.fotoapparat.hardware.CameraHardware
 import io.fotoapparat.hardware.Device
+import io.fotoapparat.parameter.Resolution
 import io.fotoapparat.result.Photo
 import kotlinx.coroutines.runBlocking
 

@@ -2,6 +2,7 @@ package io.fotoapparat.view
 
 import android.graphics.SurfaceTexture
 import android.view.SurfaceHolder
+import android.view.SurfaceView
 import android.view.TextureView
 import io.fotoapparat.view.Preview.Surface
 import io.fotoapparat.view.Preview.Texture
@@ -28,6 +29,9 @@ sealed class Preview {
             val surfaceHolder: SurfaceHolder
     ) : Preview()
 
+    data class SurfaceAsView(
+        val surfaceView: SurfaceView
+    ) : Preview()
 
     data class TextureAsView(
         val view: TextureView
@@ -47,9 +51,18 @@ internal fun SurfaceHolder.toPreview() = Surface(surfaceHolder = this)
 
 internal fun TextureView.toPreview() = TextureAsView(view = this)
 
+internal fun SurfaceView.toPreview() = Preview.SurfaceAsView(surfaceView = this)
+
 internal fun Preview.toTextureView(): TextureView {
     return when(this) {
         is TextureAsView -> this.view
+        else -> throw IllegalStateException("Preview not a TextureView")
+    }
+}
+
+internal fun Preview.toSurfaceView(): SurfaceView {
+    return when(this) {
+        is Preview.SurfaceAsView -> this.surfaceView
         else -> throw IllegalStateException("Preview not a TextureView")
     }
 }

@@ -11,6 +11,7 @@ import io.fotoapparat.hardware.orientation.Orientation.Horizontal.Landscape
 import io.fotoapparat.hardware.orientation.Orientation.Horizontal.ReverseLandscape
 import io.fotoapparat.hardware.orientation.Orientation.Vertical.Portrait
 import io.fotoapparat.hardware.orientation.Orientation.Vertical.ReversePortrait
+import io.fotoapparat.hardware.orientation.toClosestRightAngle
 
 /**
  * A phone's display.
@@ -37,7 +38,7 @@ internal open class DeviceDisplay(context: Context) {
     /**
      * Returns the orientation of the screen.
      */
-    open fun getOrientation(): Orientation = when (display.rotation) {
+    open fun getOrientation(): Orientation = when (display.rotation.toClosestRightAngle()) {
         Surface.ROTATION_0 -> Portrait
         Surface.ROTATION_90 -> Landscape
         Surface.ROTATION_180 -> ReversePortrait

@@ -36,6 +36,7 @@ import io.fotoapparat.util.CameraUtils
 import io.fotoapparat.util.FrameProcessor
 import io.fotoapparat.util.lineSeparator
 import io.fotoapparat.view.Preview
+import io.fotoapparat.view.toSurfaceView
 import io.fotoapparat.view.toTextureView
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -269,16 +270,16 @@ internal open class CameraHardware(
 //                cameraOrientation = characteristics.cameraOrientation,
 //                cameraIsMirrored = characteristics.isMirrored
 //        )
-        displayOrientation = orientationState.screenOrientation
+        displayOrientation = orientationState.displayOrientation
 
         previewOrientation = computePreviewOrientation(
-                screenOrientation = orientationState.screenOrientation,
+                displayOrientation = orientationState.displayOrientation,
                 cameraOrientation = characteristics.cameraOrientation,
                 cameraIsMirrored = characteristics.isMirrored
         )
 
         Log.d(TAG, "Orientations: $lineSeparator" +
-                "Screen orientation (preview) is: ${orientationState.screenOrientation}. " + lineSeparator +
+                "Screen orientation (preview) is: ${orientationState.displayOrientation}. " + lineSeparator +
                 "Camera sensor orientation is always at: ${characteristics.cameraOrientation}. " + lineSeparator +
                 "Camera is " + if (characteristics.isMirrored) "mirrored." else "not mirrored."
         )
@@ -290,7 +291,7 @@ internal open class CameraHardware(
         )
 
         previewStream.frameOrientation = previewOrientation
-        createCaptureSession()
+//        createCaptureSession()
     }
 
     /**
@@ -355,10 +356,10 @@ internal open class CameraHardware(
     /**
      * Returns the [Resolution] of the displayed preview.
      */
-    open fun getPreviewResolution(): Resolution {
+    open fun getStreamResolution(): Resolution {
         logger.recordMethod()
 
-        val previewResolution = this.getPreviewResolution(previewOrientation)
+        val previewResolution = this.getStreamResolution(previewOrientation)
 
         logger.log("Preview resolution is: $previewResolution")
         Log.d(TAG, "getPreviewResolution: $previewResolution")
@@ -483,15 +484,16 @@ internal open class CameraHardware(
 
         if(cameraDevice == null || previewRender == null) return
 
-        previewStream.setPreviewResolution(getPreviewResolution())
+        previewStream.setImageResolution(getStreamResolution())
 
-        val transformedTexture = CameraUtils.buildTargetTextureFromOrientation(
-            previewRender!!.toTextureView(),
-            getCameraCharacteristics(),
-            characteristics.cameraOrientation,
-            displayOrientation
-        )
-        this.surface = Surface(transformedTexture)
+//        val transformedTexture = CameraUtils.buildTargetTextureFromOrientation(
+//            previewRender!!.toTextureView(),
+//            getCameraCharacteristics(),
+//            characteristics.cameraOrientation,
+//            displayOrientation
+//        )
+//        this.surface = Surface(transformedTexture)
+        this.surface = previewRender!!.toSurfaceView().holder.surface
         val targetList = listOf(surface, previewStream.getPreviewSurface())
         this.cameraDevice?.createCaptureSession(targetList, sessionStateCallback, cameraHandler)
     }
@@ -525,7 +527,7 @@ private const val AUTOFOCUS_TIMEOUT_SECONDS = 3L
 
 
 
-private fun CameraHardware.getPreviewResolution(previewOrientation: Orientation): Resolution {
+private fun CameraHardware.getStreamResolution(previewOrientation: Orientation): Resolution {
 
 
     val cfgMap: StreamConfigurationMap? = getCameraCharacteristics().get(SCALER_STREAM_CONFIGURATION_MAP)
@@ -535,7 +537,7 @@ private fun CameraHardware.getPreviewResolution(previewOrientation: Orientation)
         val res = sizes!![5].toResolution()
         when(previewOrientation) {
             is Orientation.Vertical -> res
-            is Orientation.Horizontal -> res.flipDimensions()
+            is Orientation.Horizontal -> res //res.flipDimensions()
         }
     }
 
