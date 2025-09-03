@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Rect
 import android.graphics.SurfaceTexture
 import android.util.AttributeSet
+import android.util.Log
 import android.view.SurfaceView
 import android.view.TextureView
 import android.view.ViewGroup
@@ -15,6 +16,7 @@ import io.fotoapparat.util.projectCenterCrop
 import io.fotoapparat.util.projectCenterInside
 import io.fotoapparat.util.projectTopCrop
 import java.util.concurrent.CountDownLatch
+import kotlin.math.roundToInt
 
 /**
  * Uses [android.view.TextureView] as an output for camera.
@@ -24,23 +26,19 @@ class CameraView
         context: Context,
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0,
-) : FrameLayout(context, attrs, defStyleAttr), CameraRenderer {
-
-    private val textureLatch = CountDownLatch(1)
-    private val textureView = TextureView(context)
-    private val surfaceView = SurfaceView(context, attrs, defStyleAttr)
+) : SurfaceView(context, attrs, defStyleAttr), CameraRenderer {
 
     private lateinit var previewResolution: Resolution
     private lateinit var scaleType: ScaleType
-    private var surfaceTexture: SurfaceTexture? = textureView.tryInitialize()
+    private var aspectRatio = 0f
 
-    init {
-        addView(surfaceView)
+    companion object {
+        private val TAG = CameraView::class.java.simpleName
     }
+
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        textureLatch.countDown()
     }
 
 
@@ -50,131 +48,68 @@ class CameraView
 
     override fun setPreviewResolution(resolution: Resolution) {
         post {
+            setAspectRatio(resolution.width, resolution.height)
             previewResolution = resolution
             requestLayout()
         }
     }
 
     override fun getPreview(): Preview {
-//        val pv = surfaceTexture?.toPreview() ?: getPreviewAfterLatch()
-//        return textureView.toPreview()
-        return surfaceView.toPreview()
+        return this.toPreview()
     }
 
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        if (isInEditMode || !::previewResolution.isInitialized || !::scaleType.isInitialized) {
-            super.onLayout(changed, left, top, right, bottom)
+    /**
+     * Sets the aspect ratio for this view. The size of the view will be
+     * measured based on the ratio calculated from the parameters.
+     *
+     * @param width  Camera resolution horizontal size
+     * @param height Camera resolution vertical size
+     */
+    fun setAspectRatio(width: Int, height: Int) {
+        require(width > 0 && height > 0) { "Size cannot be negative" }
+        aspectRatio = width.toFloat() / height.toFloat()
+        holder.setFixedSize(width, height)
+        requestLayout()
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        val width = MeasureSpec.getSize(widthMeasureSpec)
+        val height = MeasureSpec.getSize(heightMeasureSpec)
+
+        if (aspectRatio == 0f) {
+            setMeasuredDimension(width, height)
         } else {
-            layoutTextureView(previewResolution, scaleType)
+
+            // Performs center-crop transformation of the camera frames
+            val newWidth: Int
+            val newHeight: Int
+            val actualRatio = if (width > height) aspectRatio else 1f / aspectRatio
+            if (width < height * actualRatio) {
+                newHeight = height
+                newWidth = (height * actualRatio).roundToInt()
+            } else {
+                newWidth = width
+                newHeight = (width / actualRatio).roundToInt()
+            }
+
+            Log.d(TAG, "onMeasure dimensions set: $newWidth x $newHeight")
+            setMeasuredDimension(newWidth, newHeight)
         }
     }
 
-    private fun getPreviewAfterLatch(): Preview.Texture {
-        textureLatch.await()
-        return surfaceTexture?.toPreview() ?: throw UnavailableSurfaceException()
-    }
-
-    private fun TextureView.tryInitialize() = surfaceTexture ?: null.also {
-        surfaceTextureListener = TextureAvailabilityListener {
-            this@CameraView.surfaceTexture = this
-            textureLatch.countDown()
-        }
-    }
-
 }
 
-private fun ViewGroup.layoutTextureView(
-        previewResolution: Resolution?,
-        scaleType: ScaleType?
-) = when (scaleType) {
-    ScaleType.CenterInside -> layoutChildrenAt(
-        previewResolution!!.projectCenterInside(measuredWidth, measuredHeight))
-    ScaleType.CenterCrop -> layoutChildrenAt(
-        previewResolution!!.projectCenterCrop(measuredWidth, measuredHeight))
-    ScaleType.TopCrop -> layoutChildrenAt(
-        previewResolution!!.projectTopCrop(measuredWidth, measuredHeight))
-    else -> null
-}
-
-//private fun Resolution.centerInside(view: ViewGroup) {
-//    val vw = view.measuredWidth
-//    val vh = view.measuredHeight
-//    val scale = Math.min(
-//            vw / width.toFloat(),
-//            vh / height.toFloat()
-//    )
-//
-//    val w = (width * scale).toInt()
-//    val h = (height * scale).toInt()
-//
-//    val extraX = Math.max(0, vw - w)
-//    val extraY = Math.max(0, vh - h)
-//
-//    val rect = Rect(
-//            extraX / 2,
-//            extraY / 2,
-//            w + extraX / 2,
-//            h + extraY / 2
-//    )
-
-//    view.layoutChildrenAt(rect)
+//private fun ViewGroup.layoutTextureView(
+//        previewResolution: Resolution?,
+//        scaleType: ScaleType?
+//) = when (scaleType) {
+//    ScaleType.CenterInside -> layoutChildrenAt(
+//        previewResolution!!.projectCenterInside(measuredWidth, measuredHeight))
+//    ScaleType.CenterCrop -> layoutChildrenAt(
+//        previewResolution!!.projectCenterCrop(measuredWidth, measuredHeight))
+//    ScaleType.TopCrop -> layoutChildrenAt(
+//        previewResolution!!.projectTopCrop(measuredWidth, measuredHeight))
+//    else -> null
 //}
 
-//private fun Resolution.centerCrop(view: ViewGroup) {
-//    val vw = view.measuredWidth
-//    val vh = view.measuredHeight
-//    val scale = Math.max(
-//        vw / width.toFloat(),
-//        vh / height.toFloat()
-//    )
-//
-//    val w = (width * scale).toInt()
-//    val h = (height * scale).toInt()
-//
-//    val extraX = Math.max(0, w - vw)
-//    val extraY = Math.max(0, h - vh)
-//
-//    val rect = Rect(
-//            -extraX / 2,
-//            -extraY / 2,
-//            w + extraX / 2,
-//            h + extraY / 2
-//    )
-//
-//    view.layoutChildrenAt(rect)
-//}
-
-//private fun Resolution.topCrop(view: ViewGroup) {
-//    val vw = view.measuredWidth
-//    val vh = view.measuredHeight
-//    val scale = Math.max(
-//            vw / width.toFloat(),
-//            vh / height.toFloat()
-//    )
-//
-//    val w = (width * scale).toInt()
-//    val h = (height * scale).toInt()
-//
-//    val extraX = Math.max(0, w - vw)
-//
-//    val rect = Rect(
-//            -extraX / 2,
-//            0,
-//            w + extraX / 2,
-//            h
-//    )
-//
-//    view.layoutChildrenAt(rect)
-//}
-
-
-private fun ViewGroup.layoutChildrenAt(rect: Rect) {
-    (0 until childCount).forEach {
-        getChildAt(it).layout(
-                rect.left,
-                rect.top,
-                rect.right,
-                rect.bottom
-        )
-    }
-}
