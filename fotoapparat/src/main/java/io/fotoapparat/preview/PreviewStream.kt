@@ -1,19 +1,16 @@
 package io.fotoapparat.preview
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
 import android.graphics.ImageFormat
 import android.media.Image
 import android.media.ImageReader
 import android.os.Handler
 import android.os.HandlerThread
-import android.util.Log
 import android.view.Surface
 import io.fotoapparat.hardware.frameProcessingExecutor
 import io.fotoapparat.hardware.orientation.Orientation
-import io.fotoapparat.image.BitmapUtils
 import io.fotoapparat.parameter.Resolution
-import io.fotoapparat.util.CameraUtils
+import io.fotoapparat.util.ImageUtils
 import io.fotoapparat.util.FrameProcessor
 import kotlinx.coroutines.sync.Mutex
 import java.util.*
@@ -133,7 +130,7 @@ internal class PreviewStream() {
               if(processMutex.tryLock()) {
 
                   try {
-                      val data = CameraUtils.yuv420ThreePlanesToNV21(it.planes, it.width, it.height)
+                      val data = ImageUtils.yuv420ThreePlanesToNV21(it.planes, it.width, it.height)
                       val buffer = ByteArray(data.remaining()).apply {
                           data.get(this)
                       }

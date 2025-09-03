@@ -32,17 +32,14 @@ import io.fotoapparat.parameter.camera.convert.toResolution
 import io.fotoapparat.preview.PreviewStream
 import io.fotoapparat.result.FocusResult
 import io.fotoapparat.result.Photo
-import io.fotoapparat.util.CameraUtils
 import io.fotoapparat.util.FrameProcessor
 import io.fotoapparat.util.lineSeparator
 import io.fotoapparat.view.Preview
 import io.fotoapparat.view.toSurfaceView
-import io.fotoapparat.view.toTextureView
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
-import kotlin.math.log
 
 
 typealias PreviewSize = io.fotoapparat.parameter.Resolution

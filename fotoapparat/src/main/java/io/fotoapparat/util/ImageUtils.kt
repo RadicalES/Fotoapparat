@@ -1,20 +1,73 @@
 package io.fotoapparat.util
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.SurfaceTexture
+import android.graphics.YuvImage
 import android.hardware.camera2.CameraCharacteristics
 import android.media.Image
+import android.util.Log
 import android.util.Size
 import android.view.TextureView
 import io.fotoapparat.hardware.orientation.Orientation
 import io.fotoapparat.hardware.orientation.toSurface
 import io.fotoapparat.parameter.Resolution
 import io.fotoapparat.parameter.ScaleType
+import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import kotlin.math.max
 
-object CameraUtils {
+object ImageUtils {
+
+    fun nv21BufferToBitmap(data: ByteArray?, width: Int, height: Int, rotation: Int): Bitmap? {
+        try {
+            val image =
+                YuvImage(
+                    data,
+                    ImageFormat.NV21,
+                    width,
+                    height,
+                    null
+                )
+            val stream = ByteArrayOutputStream()
+            image.compressToJpeg(
+                Rect(0, 0, width, height), 80, stream
+            )
+
+            val bmp = BitmapFactory.decodeByteArray(stream.toByteArray(), 0, stream.size())
+
+            stream.close()
+            return rotateBitmap(bmp, rotation, false, false)
+        } catch (e: Exception) {
+            Log.e("CameraUtils", "Error: " + e.message)
+        }
+        return null
+    }
+
+    private fun rotateBitmap(
+        bitmap: Bitmap, rotationDegrees: Int, flipX: Boolean, flipY: Boolean
+    ): Bitmap {
+        val matrix = Matrix()
+
+        // Rotate the image back to straight.
+        matrix.postRotate(rotationDegrees.toFloat())
+
+        // Mirror the image along the X or Y axis.
+        matrix.postScale(if (flipX) -1.0f else 1.0f, if (flipY) -1.0f else 1.0f)
+        val rotatedBitmap =
+            Bitmap.createBitmap(
+                bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
+            )
+
+        // Recycle the old bitmap if it has changed.
+        if (rotatedBitmap != bitmap) {
+            bitmap.recycle()
+        }
+        return rotatedBitmap
+    }
 
     fun imageToByteArray(image: Image): ByteArray? {
         image.let {
