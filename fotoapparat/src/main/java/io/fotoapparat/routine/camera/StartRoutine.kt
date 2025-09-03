@@ -8,6 +8,9 @@ import io.fotoapparat.hardware.Device
 import io.fotoapparat.hardware.orientation.OrientationSensor
 import io.fotoapparat.routine.focus.focusOnPoint
 import io.fotoapparat.routine.orientation.startOrientationMonitoring
+import io.fotoapparat.selector.firstAvailable
+import io.fotoapparat.selector.highest
+import io.fotoapparat.util.wrap
 
 /**
  * Starts the camera from idle.
@@ -50,7 +53,7 @@ internal fun Device.start(orientationSensor: OrientationSensor) {
         setDisplayOrientation(orientationSensor.lastKnownOrientationState)
     }
 
-    val streamResolution = cameraDeviceHW.getStreamResolution()
+    val streamResolutions = cameraDeviceHW.getStreamResolutions()
 
     cameraRenderer.apply {
         setScaleType(
@@ -58,9 +61,8 @@ internal fun Device.start(orientationSensor: OrientationSensor) {
         )
 
         setPreviewResolution(
-                resolution = streamResolution
+                resolution = getConfiguration().previewResolution(streamResolutions)!!
         )
-
     }
 
     focusPointSelector?.setFocalPointListener { focalRequest ->

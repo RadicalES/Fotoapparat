@@ -41,7 +41,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 
-
 typealias PreviewSize = io.fotoapparat.parameter.Resolution
 
 /**
@@ -364,6 +363,17 @@ internal open class CameraHardware(
         return previewResolution
     }
 
+    open fun getStreamResolutions(): Set<Resolution> {
+        logger.recordMethod()
+
+        val previewResolutions = this.getStreamResolutions(previewOrientation)
+
+        logger.log("Preview resolutions are: $previewResolutions")
+        Log.d(TAG, "getPreviewResolution: $previewResolutions")
+
+        return previewResolutions
+    }
+
     private fun setZoomSafely(@FloatRange(from = 0.0, to = 1.0) level: Float) {
         try {
             setZoomUnsafe(level)
@@ -451,9 +461,6 @@ internal open class CameraHardware(
                     CaptureRequest.CONTROL_CAPTURE_INTENT,
                     CaptureRequest.CONTROL_CAPTURE_INTENT_PREVIEW)
                 captureRequest?.set(
-                    CaptureRequest.CONTROL_CAPTURE_INTENT,
-                    CaptureRequest.CONTROL_CAPTURE_INTENT_PREVIEW)
-                captureRequest?.set(
                     CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
                 captureRequest?.set(
@@ -463,6 +470,7 @@ internal open class CameraHardware(
                 cameraCaptureSession.setRepeatingRequest(
                     captureRequest?.build()!!, null, cameraHandler
                 )
+
                 sessionCompletable.complete(cameraCaptureSession)
             } catch (t: Throwable) {
                 Log.e(TAG, "Failed to open camera preview.", t)
@@ -478,18 +486,9 @@ internal open class CameraHardware(
     }
 
     private fun createCaptureSession() {
-
         if(cameraDevice == null || previewRender == null) return
 
         previewStream.setImageResolution(getStreamResolution())
-
-//        val transformedTexture = CameraUtils.buildTargetTextureFromOrientation(
-//            previewRender!!.toTextureView(),
-//            getCameraCharacteristics(),
-//            characteristics.cameraOrientation,
-//            displayOrientation
-//        )
-//        this.surface = Surface(transformedTexture)
         this.surface = previewRender!!.toSurfaceView().holder.surface
         val targetList = listOf(surface, previewStream.getPreviewSurface())
         this.cameraDevice?.createCaptureSession(targetList, sessionStateCallback, cameraHandler)
@@ -522,7 +521,14 @@ private const val AUTOFOCUS_TIMEOUT_SECONDS = 3L
 //    return photoReference.get()
 //}
 
-
+private fun CameraHardware.getStreamResolutions(previewOrientation: Orientation): Set<Resolution> {
+    val cfgMap: StreamConfigurationMap? = getCameraCharacteristics().get(SCALER_STREAM_CONFIGURATION_MAP)
+    return cfgMap.run {
+       cfgMap!!.getOutputSizes(SurfaceTexture::class.java)?.map {
+            it.toResolution()
+        }!!.toSet()
+    }
+}
 
 private fun CameraHardware.getStreamResolution(previewOrientation: Orientation): Resolution {
 
