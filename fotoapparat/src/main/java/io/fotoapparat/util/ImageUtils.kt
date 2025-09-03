@@ -22,6 +22,7 @@ import kotlin.math.max
 
 object ImageUtils {
 
+    @JvmStatic
     fun nv21BufferToBitmap(data: ByteArray?, width: Int, height: Int, rotation: Int): Bitmap? {
         try {
             val image =
