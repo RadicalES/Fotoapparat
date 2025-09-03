@@ -38,7 +38,7 @@ class CameraView
     init {
         addView(surfaceView)
     }
-    
+
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
     }
@@ -73,32 +73,6 @@ class CameraView
         requestLayout()
     }
 
-//    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-//        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-//        val width = MeasureSpec.getSize(widthMeasureSpec)
-//        val height = MeasureSpec.getSize(heightMeasureSpec)
-//
-//        if (aspectRatio == 0f) {
-//            setMeasuredDimension(width, height)
-//        } else {
-//
-//            // Performs center-crop transformation of the camera frames
-//            val newWidth: Int
-//            val newHeight: Int
-//            val actualRatio = if (width > height) aspectRatio else 1f / aspectRatio
-//            if (width < height * actualRatio) {
-//                newHeight = height
-//                newWidth = (height * actualRatio).roundToInt()
-//            } else {
-//                newWidth = width
-//                newHeight = (width / actualRatio).roundToInt()
-//            }
-//
-//            Log.d(TAG, "onMeasure dimensions set: $newWidth x $newHeight")
-//            setMeasuredDimension(newWidth, newHeight)
-//        }
-//    }
-
     inner class CameraSurfaceView(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) :
         SurfaceView(context, attrs, defStyleAttr) {
 
@@ -106,41 +80,29 @@ class CameraView
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
             val width = MeasureSpec.getSize(widthMeasureSpec)
             val height = MeasureSpec.getSize(heightMeasureSpec)
+            setMeasuredDimension(width, height)
 
-            if (aspectRatio == 0f) {
-                setMeasuredDimension(width, height)
-            } else {
-
-                // Performs center-crop transformation of the camera frames
-                val newWidth: Int
-                val newHeight: Int
-                val actualRatio = if (width > height) aspectRatio else 1f / aspectRatio
-                if (width < height * actualRatio) {
-                    newHeight = height
-                    newWidth = (height * actualRatio).roundToInt()
-                } else {
-                    newWidth = width
-                    newHeight = (width / actualRatio).roundToInt()
-                }
-
-                Log.d(TAG, "onMeasure dimensions set: $newWidth x $newHeight")
-                setMeasuredDimension(newWidth, newHeight)
-            }
+//            if (aspectRatio == 0f) {
+//                setMeasuredDimension(width, height)
+//            } else {
+//
+//                // Performs center-crop transformation of the camera frames
+//                val newWidth: Int
+//                val newHeight: Int
+//                val actualRatio = if (width > height) aspectRatio else 1f / aspectRatio
+//                if (width < height * actualRatio) {
+//                    newHeight = height
+//                    newWidth = (height * actualRatio).roundToInt()
+//                } else {
+//                    newWidth = width
+//                    newHeight = (width / actualRatio).roundToInt()
+//                }
+//
+//                Log.d(TAG, "onMeasure dimensions set: $newWidth x $newHeight")
+//                setMeasuredDimension(newWidth, newHeight)
+//            }
         }
     }
-
 }
 
-//private fun ViewGroup.layoutTextureView(
-//        previewResolution: Resolution?,
-//        scaleType: ScaleType?
-//) = when (scaleType) {
-//    ScaleType.CenterInside -> layoutChildrenAt(
-//        previewResolution!!.projectCenterInside(measuredWidth, measuredHeight))
-//    ScaleType.CenterCrop -> layoutChildrenAt(
-//        previewResolution!!.projectCenterCrop(measuredWidth, measuredHeight))
-//    ScaleType.TopCrop -> layoutChildrenAt(
-//        previewResolution!!.projectTopCrop(measuredWidth, measuredHeight))
-//    else -> null
-//}
 
