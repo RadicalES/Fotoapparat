@@ -135,14 +135,15 @@ internal class PreviewStream() {
                           data.get(this)
                       }
 
-                        postInferenceCallback = Runnable {
-                            it.close()
-                            processMutex.unlock()
-                        }
+                      postInferenceCallback = Runnable {
+                          it.close()
+                          processMutex.unlock()
+                      }
 
-                        dispatchFrameOnBackgroundThread( buffer,
-                            it.width, it.height,
-                            frameOrientation.degrees)
+                      dispatchFrameOnBackgroundThread( buffer,
+                          it.width, it.height,
+                          frameOrientation.degrees
+                      )
 
                   } catch (_: IllegalStateException) { }
 

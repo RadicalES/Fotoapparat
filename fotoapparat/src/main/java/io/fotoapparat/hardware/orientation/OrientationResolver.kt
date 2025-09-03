@@ -13,7 +13,7 @@ fun computePreviewOrientation(
         cameraOrientation: Orientation,
         cameraIsMirrored: Boolean
 ): Orientation {
-    val sign = if (cameraIsMirrored) 1 else -1
+    val sign = if (cameraIsMirrored) -1 else 1
 
 //    val rotation = (720
 //            + mirroredCameraModifier * screenOrientation.degrees
