@@ -32,3 +32,4 @@ data class CameraParameters(
                 "previewResolution:" + previewResolution.wrap()
     }
 }
+

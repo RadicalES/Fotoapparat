@@ -26,7 +26,7 @@ internal fun Device.updateCameraConfiguration(
     val frameProcessor = getFrameProcessor()
 
     cameraHardware.updateParameters(
-            cameraParameters = cameraParameters
+            parameters = cameraParameters
     )
 
     cameraHardware.updateFrameProcessor(

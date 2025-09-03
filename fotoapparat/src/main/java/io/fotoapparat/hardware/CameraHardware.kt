@@ -56,7 +56,7 @@ internal open class CameraHardware(
     private val cameraHandler = Handler(cameraThread.looper)
 
     private val capabilities = CompletableDeferred<Capabilities>()
-    private val cameraParameters = AwaitBroadcastChannel<CameraParameters>()
+    private var cameraParameters: CameraParameters? = null
 
     private var cameraCompletable = CompletableDeferred<CameraDevice>()
     private var sessionCompletable = CompletableDeferred<CameraCaptureSession>()
@@ -223,22 +223,23 @@ internal open class CameraHardware(
      */
     open suspend fun getParameters(): CameraParameters {
         logger.recordMethod()
-        return cameraParameters.getValue()
+        return cameraParameters!!
     }
 
     /**
      * Updates the desired camera parameters.
      */
-    open suspend fun updateParameters(cameraParameters: CameraParameters) {
+    open suspend fun updateParameters(parameters: CameraParameters) {
         logger.recordMethod()
 
-        this.cameraParameters.send(cameraParameters)
+        cameraParameters = parameters
 
         logger.log("New camera parameters are: $cameraParameters")
+        Log.d(TAG, "updateParameters: ${cameraParameters}")
 
 //        cameraParameters.applyInto(cachedCameraParameters ?: camera.parameters)
-//                .cacheLocally()
-//                .setInCamera()
+//            .cacheLocally()
+//            .setInCamera()
     }
 
     /**
@@ -488,7 +489,8 @@ internal open class CameraHardware(
     private fun createCaptureSession() {
         if(cameraDevice == null || previewRender == null) return
 
-        previewStream.setImageResolution(getStreamResolution())
+        previewStream.setImageResolution(cameraParameters?.previewResolution!!)
+
         this.surface = previewRender!!.toSurfaceView().holder.surface
         val targetList = listOf(surface, previewStream.getPreviewSurface())
         this.cameraDevice?.createCaptureSession(targetList, sessionStateCallback, cameraHandler)
